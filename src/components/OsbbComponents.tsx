@@ -1,9 +1,9 @@
 import { useState } from 'react';
 import type {
-  Profile,
+  Resident,
   Meter,
   MeterReading,
-  Bill,
+  Receipt,
   MaintenanceRequest,
   RequestStatus,
 } from '../types/database';
@@ -39,13 +39,13 @@ import {
 } from 'lucide-react';
 
 interface ResidentCabinetProps {
-  residents: Profile[];
+  residents: Resident[];
   meters: Meter[];
   meterReadings: MeterReading[];
-  receipts: Bill[];
+  receipts: Receipt[];
   requests: MaintenanceRequest[];
-  selectedResident: Profile | null;
-  setSelectedResident: (r: Profile | null) => void;
+  selectedResident: Resident | null;
+  setSelectedResident: (r: Resident | null) => void;
   onSubmitReading: (meterId: string, reading: number) => void;
   onAddMeter: (e: React.FormEvent<HTMLFormElement>, residentId?: string) => void;
   onDeleteMeter: (id: string) => void;
@@ -85,9 +85,9 @@ export function ResidentCabinet({
   const [activeTab, setActiveTab] = useState<'meters' | 'bills' | 'requests'>('meters');
   const [expandedMeters, setExpandedMeters] = useState<Record<string, boolean>>({});
 
-  const residentMeters = meters.filter((m) => m.user_id === selectedResident?.id);
-  const residentReceipts = receipts.filter((r) => r.user_id === selectedResident?.id);
-  const residentRequests = requests.filter((r) => r.user_id === selectedResident?.id);
+  const residentMeters = meters.filter((m) => m.resident_id === selectedResident?.id);
+  const residentReceipts = receipts.filter((r) => r.resident_id === selectedResident?.id);
+  const residentRequests = requests.filter((r) => r.resident_id === selectedResident?.id);
 
   const totalDebt = residentReceipts
     .filter((r) => r.status === 'unpaid')
@@ -122,13 +122,13 @@ export function ResidentCabinet({
               >
                 <div className="flex items-center gap-3">
                   <div className="w-12 h-12 bg-gradient-to-br from-teal-400 to-cyan-500 rounded-xl flex items-center justify-center text-white font-bold text-lg shadow-md">
-                    {resident.full_name.charAt(0).toUpperCase()}
+                    {resident.name.charAt(0).toUpperCase()}
                   </div>
                   <div className="flex-1">
                     <p className="font-semibold text-slate-800 group-hover:text-teal-700 transition-colors">
-                      {resident.full_name}
+                      {resident.name}
                     </p>
-                    <p className="text-sm text-slate-500">Кв. {resident.apartment_number}</p>
+                    <p className="text-sm text-slate-500">Кв. {resident.apartment}</p>
                   </div>
                   <ChevronRight className="w-5 h-5 text-slate-400 group-hover:text-teal-500 group-hover:translate-x-1 transition-all" />
                 </div>
@@ -150,8 +150,8 @@ export function ResidentCabinet({
                   <User className="w-8 h-8 text-white" />
                 </div>
                 <div className="text-white">
-                  <h2 className="text-2xl font-bold">{selectedResident.full_name}</h2>
-                  <p className="text-teal-100">Квартира {selectedResident.apartment_number}</p>
+                  <h2 className="text-2xl font-bold">{selectedResident.name}</h2>
+                  <p className="text-teal-100">Квартира {selectedResident.apartment}</p>
                   {selectedResident.phone && (
                     <p className="text-teal-200 text-sm mt-1">{selectedResident.phone}</p>
                   )}
@@ -598,11 +598,12 @@ function MeterCard({
 }
 
 interface AdminPanelProps {
-  residents: Profile[];
+  residents: Resident[];
   meters: Meter[];
   meterReadings: MeterReading[];
-  receipts: Bill[];
+  receipts: Receipt[];
   requests: MaintenanceRequest[];
+  onAddResident: (e: React.FormEvent<HTMLFormElement>, area?: number) => void;
   onDeleteResident: (id: string) => void;
   onAddMeter: (e: React.FormEvent<HTMLFormElement>, residentId?: string) => void;
   onDeleteMeter: (id: string) => void;
@@ -624,6 +625,7 @@ export function AdminPanel({
   meters,
   receipts,
   requests,
+  onAddResident,
   onDeleteResident,
   onAddMeter,
   onDeleteMeter,
@@ -652,7 +654,7 @@ export function AdminPanel({
   const inProgressRequests = requests.filter((r) => r.status === 'in_progress').length;
 
   const debtorResidentIds = new Set(
-    receipts.filter((r) => r.status === 'unpaid').map((r) => r.user_id)
+    receipts.filter((r) => r.status === 'unpaid').map((r) => r.resident_id)
   );
 
   const filteredResidents = residents.filter((r) =>
@@ -661,7 +663,7 @@ export function AdminPanel({
 
   const getResidentDebt = (residentId: string) => {
     return receipts
-      .filter((r) => r.user_id === residentId && r.status === 'unpaid')
+      .filter((r) => r.resident_id === residentId && r.status === 'unpaid')
       .reduce((sum, r) => sum + r.amount, 0);
   };
 
@@ -806,7 +808,7 @@ export function AdminPanel({
                           <div>
                             <p className="font-medium text-slate-800 text-sm">{req.topic}</p>
                             <p className="text-xs text-slate-500">
-                              Кв. {req.profiles?.apartment_number || 'N/A'}
+                              Кв. {req.residents?.apartment || 'N/A'}
                             </p>
                           </div>
                         </div>
@@ -850,11 +852,11 @@ export function AdminPanel({
                         >
                           <div className="flex items-center gap-3">
                             <div className="w-8 h-8 bg-amber-200 rounded-lg flex items-center justify-center text-amber-700 font-bold text-sm">
-                              {resident.full_name.charAt(0)}
+                              {resident.name.charAt(0)}
                             </div>
                             <div>
-                              <p className="font-medium text-slate-800 text-sm">{resident.full_name}</p>
-                              <p className="text-xs text-slate-500">Кв. {resident.apartment_number}</p>
+                              <p className="font-medium text-slate-800 text-sm">{resident.name}</p>
+                              <p className="text-xs text-slate-500">Кв. {resident.apartment}</p>
                             </div>
                           </div>
                           <span className="font-bold text-amber-700">{debt.toLocaleString()} ₴</span>
@@ -933,6 +935,7 @@ export function AdminPanel({
                 </button>
               </div>
             </div>
+            <ResidentForm onSubmit={onAddResident} />
           </div>
 
           <div className="overflow-x-auto">
@@ -966,13 +969,13 @@ export function AdminPanel({
                       <td className="py-3 px-4">
                         <div className="flex items-center gap-2">
                           <div className="w-10 h-10 bg-gradient-to-br from-teal-400 to-cyan-500 rounded-lg flex items-center justify-center text-white font-bold">
-                            {resident.apartment_number}
+                            {resident.apartment}
                           </div>
                         </div>
                       </td>
                       <td className="py-3 px-4">
                         <div>
-                          <p className="font-medium text-slate-800">{resident.full_name}</p>
+                          <p className="font-medium text-slate-800">{resident.name}</p>
                           {resident.role === 'admin' && (
                             <span className="text-xs text-amber-600 font-medium">Админ</span>
                           )}
@@ -981,7 +984,7 @@ export function AdminPanel({
                       <td className="py-3 px-4">
                         <div className="flex items-center gap-1">
                           <Square className="w-4 h-4 text-slate-400" />
-                          <span className="text-slate-700">{resident.square_meters} м²</span>
+                          <span className="text-slate-700">{resident.area} м²</span>
                         </div>
                       </td>
                       <td className="py-3 px-4 text-slate-600">{resident.phone || '-'}</td>
@@ -1019,7 +1022,7 @@ export function AdminPanel({
             <MeterForm
               residentId={residents[0]?.id || ''}
               onSubmit={(e) => onAddMeter(e)}
-              profiles={residents}
+              residents={residents}
               getMeterLabel={getMeterLabel}
             />
           </div>
@@ -1038,7 +1041,7 @@ export function AdminPanel({
                     <div>
                       <p className="font-semibold text-slate-800">{getMeterLabel(meter.type)}</p>
                       <p className="text-sm text-slate-500">
-                        Кв. {meter.profiles?.apartment_number || 'N/A'}
+                        Кв. {meter.residents?.apartment || 'N/A'}
                       </p>
                     </div>
                   </div>
@@ -1082,7 +1085,7 @@ export function AdminPanel({
             <ReceiptForm
               residentId={residents[0]?.id || ''}
               onSubmit={(e) => onAddReceipt(e)}
-              profiles={residents}
+              residents={residents}
             />
           </div>
 
@@ -1108,7 +1111,7 @@ export function AdminPanel({
                     className="border-b border-slate-100 hover:bg-slate-50 transition-colors"
                   >
                     <td className="py-3 px-4 font-medium text-slate-800">
-                      {receipt.profiles?.apartment_number || 'N/A'}
+                      {receipt.residents?.apartment || 'N/A'}
                     </td>
                     <td className="py-3 px-4 text-slate-600">{receipt.month || '-'}</td>
                     <td className="py-3 px-4 text-slate-800 font-medium">
@@ -1197,7 +1200,7 @@ export function AdminPanel({
                         <div className="flex items-center gap-4 mt-2 text-sm text-slate-500 flex-wrap">
                           <span className="inline-flex items-center gap-1">
                             <Building2 className="w-3.5 h-3.5" />
-                            Кв. {req.profiles?.apartment_number || 'N/A'}
+                            Кв. {req.residents?.apartment || 'N/A'}
                           </span>
                           <span>{new Date(req.created_at).toLocaleDateString('uk-UA')}</span>
                           {req.master && (
@@ -1353,15 +1356,101 @@ function BillGeneratorModal({
   );
 }
 
+function ResidentForm({
+  onSubmit,
+}: {
+  onSubmit: (e: React.FormEvent<HTMLFormElement>, area?: number) => void;
+}) {
+  const [isOpen, setIsOpen] = useState(false);
+  const [area, setArea] = useState('50');
+
+  const handleSubmit = (e: React.FormEvent<HTMLFormElement>) => {
+    onSubmit(e, parseFloat(area) || 50);
+    setIsOpen(false);
+    setArea('50');
+  };
+
+  return (
+    <div className="relative">
+      <button
+        onClick={() => setIsOpen(!isOpen)}
+        className="flex items-center gap-2 px-4 py-2 bg-gradient-to-r from-teal-500 to-cyan-500 text-white rounded-lg font-medium hover:from-teal-600 hover:to-cyan-600 transition-all shadow-md shadow-teal-500/25"
+      >
+        <Plus className="w-4 h-4" />
+        Добавить квартиру
+      </button>
+
+      {isOpen && (
+        <form
+          onSubmit={handleSubmit}
+          className="absolute right-0 top-full mt-2 w-80 bg-white rounded-xl shadow-xl border border-slate-200 p-4 z-10"
+        >
+          <div className="space-y-3">
+            <input
+              name="name"
+              placeholder="ФИО владельца"
+              required
+              className="w-full px-3 py-2 border border-slate-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-teal-500"
+            />
+            <input
+              name="apartment"
+              placeholder="Номер квартиры"
+              required
+              className="w-full px-3 py-2 border border-slate-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-teal-500"
+            />
+            <div className="flex items-center gap-2">
+              <Square className="w-4 h-4 text-slate-400" />
+              <input
+                type="number"
+                placeholder="Площадь (м²)"
+                value={area}
+                onChange={(e) => setArea(e.target.value)}
+                className="flex-1 px-3 py-2 border border-slate-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-teal-500"
+              />
+            </div>
+            <input
+              name="phone"
+              placeholder="Телефон"
+              className="w-full px-3 py-2 border border-slate-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-teal-500"
+            />
+            <select
+              name="role"
+              className="w-full px-3 py-2 border border-slate-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-teal-500"
+            >
+              <option value="resident">Жилец</option>
+              <option value="admin">Админ</option>
+            </select>
+            <div className="flex gap-2">
+              <button
+                type="button"
+                onClick={() => setIsOpen(false)}
+                className="flex-1 px-3 py-2 border border-slate-200 rounded-lg text-slate-600 hover:bg-slate-50"
+              >
+                Отмена
+              </button>
+              <button
+                type="submit"
+                className="flex-1 px-3 py-2 bg-teal-500 text-white rounded-lg hover:bg-teal-600"
+              >
+                Добавить
+              </button>
+            </div>
+          </div>
+        </form>
+      )}
+    </div>
+  );
+}
+
 function MeterForm({
   residentId,
   onSubmit,
-  profiles,
+  residents,
   getMeterLabel,
 }: {
   residentId: string;
   onSubmit: (e: React.FormEvent<HTMLFormElement>) => void;
-  profiles?: Profile[];
+  residents?: Resident[];
   getMeterLabel: (type: string) => string;
 }) {
   const [isOpen, setIsOpen] = useState(false);
@@ -1386,19 +1475,19 @@ function MeterForm({
           className="absolute right-0 top-full mt-2 w-72 bg-white rounded-xl shadow-xl border border-slate-200 p-4 z-10"
         >
           <div className="space-y-3">
-            {profiles && (
+            {residents && (
               <select
-                name="user_id"
+                name="resident_id"
                 className="w-full px-3 py-2 border border-slate-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-teal-500"
               >
-                {profiles.map((r) => (
+                {residents.map((r) => (
                   <option key={r.id} value={r.id}>
-                    Кв. {r.apartment_number} - {r.full_name}
+                    Кв. {r.apartment} - {r.name}
                   </option>
                 ))}
               </select>
             )}
-            {!profiles && <input type="hidden" name="user_id" value={residentId} />}
+            {!residents && <input type="hidden" name="resident_id" value={residentId} />}
             <select
               name="type"
               className="w-full px-3 py-2 border border-slate-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-teal-500"
@@ -1448,11 +1537,11 @@ function MeterForm({
 function ReceiptForm({
   residentId,
   onSubmit,
-  profiles,
+  residents,
 }: {
   residentId: string;
   onSubmit: (e: React.FormEvent<HTMLFormElement>) => void;
-  profiles?: Profile[];
+  residents?: Resident[];
 }) {
   const [isOpen, setIsOpen] = useState(false);
   const currentMonth = `${new Date().getFullYear()}-${String(new Date().getMonth() + 1).padStart(2, '0')}`;
@@ -1476,19 +1565,19 @@ function ReceiptForm({
           className="absolute right-0 top-full mt-2 w-72 bg-white rounded-xl shadow-xl border border-slate-200 p-4 z-10"
         >
           <div className="space-y-3">
-            {profiles && (
+            {residents && (
               <select
-                name="user_id"
+                name="resident_id"
                 className="w-full px-3 py-2 border border-slate-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-teal-500"
               >
-                {profiles.map((r) => (
+                {residents.map((r) => (
                   <option key={r.id} value={r.id}>
-                    Кв. {r.apartment_number} - {r.full_name}
+                    Кв. {r.apartment} - {r.name}
                   </option>
                 ))}
               </select>
             )}
-            {!profiles && <input type="hidden" name="user_id" value={residentId} />}
+            {!residents && <input type="hidden" name="resident_id" value={residentId} />}
             <input
               name="month"
               type="month"
