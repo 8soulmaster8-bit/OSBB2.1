@@ -100,11 +100,10 @@ export function AuthPage() {
     const { error, needsEmailConfirmation } = await signUp({
       email,
       password,
-      name,
+      fullName: name,
       phone,
-      apartment,
-      area: areaNumber,
-      role,
+      apartmentNumber: apartment,
+      squareMeters: areaNumber,
     });
     setSubmitting(false);
 

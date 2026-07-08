@@ -22,6 +22,8 @@ interface AuthContextValue {
   signUp: (fields: SignUpFields) => Promise<{ error: string | null; needsEmailConfirmation: boolean }>;
   signOut: () => Promise<void>;
   refreshProfile: () => Promise<void>;
+  updatePhone: (phone: string) => Promise<{ error: string | null }>;
+  updatePassword: (password: string) => Promise<{ error: string | null }>;
 }
 
 const AuthContext = createContext<AuthContextValue | undefined>(undefined);
@@ -109,9 +111,22 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     if (user) await loadProfile(user.id);
   };
 
+  const updatePhone = async (phone: string) => {
+    const { error } = await supabase.from('profiles').update({ phone }).eq('id', user!.id);
+    if (error) return { error: translateAuthError(error.message) };
+    await refreshProfile();
+    return { error: null };
+  };
+
+  const updatePassword = async (password: string) => {
+    const { error } = await supabase.auth.updateUser({ password });
+    if (error) return { error: translateAuthError(error.message) };
+    return { error: null };
+  };
+
   return (
     <AuthContext.Provider
-      value={{ session, user, profile, loading, profileLoading, signIn, signUp, signOut, refreshProfile }}
+      value={{ session, user, profile, loading, profileLoading, signIn, signUp, signOut, refreshProfile, updatePhone, updatePassword }}
     >
       {children}
     </AuthContext.Provider>
