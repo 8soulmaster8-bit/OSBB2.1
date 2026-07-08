@@ -3,6 +3,7 @@ import { useAuth } from './context/AuthContext';
 import { AuthPage } from './pages/AuthPage';
 import { AdminDashboardPage } from './pages/AdminDashboardPage';
 import { UserDashboardPage } from './pages/UserDashboardPage';
+import { ProfilePage } from './pages/ProfilePage';
 import { ProtectedRoute, dashboardPathForRole } from './components/ProtectedRoute';
 import { Building2 } from 'lucide-react';
 
@@ -43,8 +44,16 @@ function App() {
       <Route
         path="/user/dashboard"
         element={
-          <ProtectedRoute role="resident">
+          <ProtectedRoute role="user">
             <UserDashboardPage />
+          </ProtectedRoute>
+        }
+      />
+      <Route
+        path="/profile"
+        element={
+          <ProtectedRoute>
+            <ProfilePage />
           </ProtectedRoute>
         }
       />
