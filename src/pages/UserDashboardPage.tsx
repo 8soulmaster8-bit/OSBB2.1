@@ -1,8 +1,9 @@
 import { useEffect, useState } from 'react';
-import { Building2, User, LogOut } from 'lucide-react';
+import { Building2 } from 'lucide-react';
 import { useAuth } from '../context/AuthContext';
 import { useOsbbData } from '../hooks/useOsbbData';
 import { ResidentCabinet } from '../components/OsbbComponents';
+import { UserMenu } from '../components/UserMenu';
 import {
   getMeterIcon,
   getMeterLabel,
@@ -11,10 +12,10 @@ import {
   getStatusIcon,
   getStatusColor,
 } from '../utils/osbbHelpers';
-import type { Resident } from '../types/database';
+import type { Profile } from '../types/database';
 
 export function UserDashboardPage() {
-  const { profile, signOut } = useAuth();
+  const { profile } = useAuth();
   const {
     residents,
     meters,
@@ -34,7 +35,7 @@ export function UserDashboardPage() {
   // Row Level Security ensures a resident only ever receives their own row
   // in `residents`, so we can safely auto-select it — no manual profile
   // picker needed once the person is authenticated.
-  const [selectedResident, setSelectedResident] = useState<Resident | null>(null);
+  const [selectedResident, setSelectedResident] = useState<Profile | null>(null);
 
   useEffect(() => {
     if (!selectedResident && profile) {
@@ -69,19 +70,7 @@ export function UserDashboardPage() {
               </div>
             </div>
 
-            <div className="flex items-center gap-3">
-              <div className="hidden sm:flex items-center gap-2 px-3 py-1.5 bg-teal-100 text-teal-700 rounded-lg text-sm font-medium">
-                <User className="w-4 h-4" />
-                {profile?.name || 'Мешканець'}
-              </div>
-              <button
-                onClick={signOut}
-                className="flex items-center gap-2 px-3 py-2 text-slate-500 hover:text-red-600 hover:bg-red-50 rounded-lg transition-colors text-sm font-medium"
-              >
-                <LogOut className="w-4 h-4" />
-                <span className="hidden sm:inline">Вийти</span>
-              </button>
-            </div>
+            <UserMenu />
           </div>
         </div>
       </header>
