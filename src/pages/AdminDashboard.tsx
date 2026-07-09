@@ -1,62 +1,151 @@
-import { useAuth } from '../context/AuthContext';
-import { supabase } from '../lib/supabase';
-import { Building2, Users, FileText, Settings, Wrench, LogOut } from 'lucide-react';
-import { useEffect, useState } from 'react';
+import { useState, useEffect } from 'react'
+import { supabase, Profile, Bill, Request as RequestType } from '../lib/supabase'
 
-export function AdminDashboard() {
-  const { profile, signOut } = useAuth();
-  const [stats, setStats] = useState({ residents: 0, bills: 0, requests: 0 });
+interface AdminStats {
+  totalUsers: number
+  totalBills: number
+  unpaidBills: number
+  totalRequests: number
+  newRequests: number
+  totalRevenue: number
+  pendingRevenue: number
+}
 
-  useEffect(() => { loadStats(); }, []);
+export default function AdminDashboard() {
+  const [stats, setStats] = useState<AdminStats | null>(null)
+  const [recentUsers, setRecentUsers] = useState<Profile[]>([])
+  const [recentRequests, setRecentRequests] = useState<RequestType[]>([])
+  const [loading, setLoading] = useState(true)
 
-  async function loadStats() {
-    const { count: residents } = await supabase.from('profiles').select('*', { count: 'exact', head: true });
-    const { count: bills } = await supabase.from('bills').select('*', { count: 'exact', head: true });
-    const { count: requests } = await supabase.from('requests').select('*', { count: 'exact', head: true });
-    setStats({ residents: residents || 0, bills: bills || 0, requests: requests || 0 });
+  useEffect(() => {
+    fetchDashboardData()
+  }, [])
+
+  const fetchDashboardData = async () => {
+    setLoading(true)
+
+    const [usersRes, billsRes, requestsRes] = await Promise.all([
+      supabase.from('profiles').select('*', { count: 'exact' }).order('created_at', { ascending: false }).limit(5),
+      supabase.from('bills').select('*'),
+      supabase.from('requests').select('*, profiles(full_name, apartment_number)').order('created_at', { ascending: false }).limit(10),
+    ])
+
+    const users = (usersRes.data || []) as Profile[]
+    const bills = (billsRes.data || []) as Bill[]
+    const requests = (requestsRes.data || []) as RequestType[]
+
+    setRecentUsers(users)
+    setRecentRequests(requests)
+
+    const paidBills = bills.filter(b => b.status === 'paid')
+    const unpaidBills = bills.filter(b => b.status === 'unpaid')
+
+    setStats({
+      totalUsers: usersRes.count || users.length,
+      totalBills: bills.length,
+      unpaidBills: unpaidBills.length,
+      totalRequests: requests.length,
+      newRequests: requests.filter(r => r.status === 'new').length,
+      totalRevenue: paidBills.reduce((sum, b) => sum + Number(b.amount), 0),
+      pendingRevenue: unpaidBills.reduce((sum, b) => sum + Number(b.amount), 0),
+    })
+
+    setLoading(false)
+  }
+
+  if (loading) {
+    return (
+      <div className="flex items-center justify-center h-64">
+        <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-blue-500"></div>
+      </div>
+    )
+  }
+
+  const statusBadge = (status: string) => {
+    const styles: Record<string, string> = {
+      new: 'bg-blue-100 text-blue-700',
+      in_progress: 'bg-yellow-100 text-yellow-700',
+      completed: 'bg-green-100 text-green-700',
+    }
+    const labels: Record<string, string> = {
+      new: 'Нова',
+      in_progress: 'В роботі',
+      completed: 'Виконано',
+    }
+    return (
+      <span className={`px-2 py-1 rounded-full text-xs font-medium ${styles[status]}`}>
+        {labels[status]}
+      </span>
+    )
   }
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-slate-50 via-cyan-50 to-teal-50">
-      <header className="bg-white/80 backdrop-blur-lg border-b border-slate-200 sticky top-0 z-50">
-        <div className="max-w-7xl mx-auto px-4 flex items-center justify-between h-16">
-          <div className="flex items-center gap-3">
-            <div className="w-10 h-10 bg-gradient-to-br from-teal-500 to-cyan-600 rounded-xl flex items-center justify-center">
-              <Building2 className="w-5 h-5 text-white" />
-            </div>
-            <div>
-              <h1 className="text-lg font-bold text-slate-800">ОСББ Управління</h1>
-              <p className="text-xs text-slate-500">Кабінет адміна</p>
-            </div>
-          </div>
-          <div className="flex items-center gap-4">
-            <span className="text-slate-600">{profile?.full_name}</span>
-            <button onClick={signOut} className="p-2 text-slate-400 hover:text-slate-600">
-              <LogOut className="w-5 h-5" />
-            </button>
-          </div>
-        </div>
-      </header>
+    <div className="space-y-6">
+      <div>
+        <h2 className="text-2xl font-bold text-gray-900">Панель управління</h2>
+        <p className="text-gray-500">Огляд системи ОСББ</p>
+      </div>
 
-      <main className="max-w-7xl mx-auto px-4 py-8">
-        <h2 className="text-2xl font-bold text-slate-800 mb-6">Вітаємо, {profile?.full_name}!</h2>
-        <div className="grid sm:grid-cols-2 lg:grid-cols-4 gap-4">
-          <Card icon={<Users />} title="Жителі" count={stats.residents} color="from-blue-500 to-cyan-600" />
-          <Card icon={<FileText />} title="Рахунки" count={stats.bills} color="from-green-500 to-emerald-600" />
-          <Card icon={<Wrench />} title="Заявки" count={stats.requests} color="from-amber-500 to-orange-600" />
-          <Card icon={<Settings />} title="Налаштування" count={0} color="from-purple-500 to-violet-600" />
+      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
+        <div className="bg-white rounded-xl shadow-sm p-6 border-l-4 border-blue-500">
+          <p className="text-sm text-gray-500">Користувачів</p>
+          <p className="text-3xl font-bold text-gray-900">{stats?.totalUsers || 0}</p>
         </div>
-      </main>
-    </div>
-  );
-}
+        <div className="bg-white rounded-xl shadow-sm p-6 border-l-4 border-red-500">
+          <p className="text-sm text-gray-500">Неоплачені рахунки</p>
+          <p className="text-3xl font-bold text-gray-900">{stats?.unpaidBills || 0}</p>
+        </div>
+        <div className="bg-white rounded-xl shadow-sm p-6 border-l-4 border-yellow-500">
+          <p className="text-sm text-gray-500">Нові заявки</p>
+          <p className="text-3xl font-bold text-gray-900">{stats?.newRequests || 0}</p>
+        </div>
+        <div className="bg-white rounded-xl shadow-sm p-6 border-l-4 border-green-500">
+          <p className="text-sm text-gray-500">До сплати</p>
+          <p className="text-3xl font-bold text-gray-900">{stats?.pendingRevenue?.toLocaleString() || 0} грн</p>
+        </div>
+      </div>
 
-function Card({ icon, title, count, color }: { icon: React.ReactNode; title: string; count: number; color: string }) {
-  return (
-    <div className="bg-white rounded-xl border border-slate-200 p-6 hover:shadow-lg transition-all cursor-pointer group">
-      <div className={`w-12 h-12 rounded-xl bg-gradient-to-br ${color} flex items-center justify-center text-white mb-4 group-hover:scale-110 transition-transform`}>{icon}</div>
-      <h3 className="text-lg font-semibold text-slate-800">{title}</h3>
-      <p className="text-2xl font-bold text-slate-600">{count}</p>
+      <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+        <div className="bg-white rounded-xl shadow-sm p-6">
+          <h3 className="text-lg font-semibold mb-4">Останні користувачі</h3>
+          {recentUsers.length === 0 ? (
+            <p className="text-gray-500 text-center py-4">Немає користувачів</p>
+          ) : (
+            <div className="space-y-3">
+              {recentUsers.map(user => (
+                <div key={user.id} className="flex justify-between items-center p-3 bg-gray-50 rounded-lg">
+                  <div>
+                    <p className="font-medium">{user.full_name}</p>
+                    <p className="text-sm text-gray-500">кв. {user.apartment_number}</p>
+                  </div>
+                  <span className={`px-2 py-1 rounded text-xs ${user.role === 'admin' ? 'bg-purple-100 text-purple-700' : 'bg-gray-100 text-gray-600'}`}>
+                    {user.role === 'admin' ? 'Адмін' : 'Користувач'}
+                  </span>
+                </div>
+              ))}
+            </div>
+          )}
+        </div>
+
+        <div className="bg-white rounded-xl shadow-sm p-6">
+          <h3 className="text-lg font-semibold mb-4">Останні заявки</h3>
+          {recentRequests.length === 0 ? (
+            <p className="text-gray-500 text-center py-4">Немає заявок</p>
+          ) : (
+            <div className="space-y-3">
+              {recentRequests.map(req => (
+                <div key={req.id} className="flex justify-between items-center p-3 bg-gray-50 rounded-lg">
+                  <div>
+                    <p className="font-medium">{req.topic}</p>
+                    <p className="text-sm text-gray-500 truncate max-w-xs">{req.description}</p>
+                  </div>
+                  {statusBadge(req.status)}
+                </div>
+              ))}
+            </div>
+          )}
+        </div>
+      </div>
     </div>
-  );
+  )
 }

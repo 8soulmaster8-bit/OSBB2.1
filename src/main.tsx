@@ -8,6 +8,12 @@ import Bills from './pages/Bills'
 import Meters from './pages/Meters'
 import Requests from './pages/Requests'
 import AuthProvider, { useAuth } from './contexts/AuthContext'
+import AdminApp, { checkAdminAuth } from './pages/AdminApp'
+import AdminLogin from './pages/AdminLogin'
+import AdminDashboard from './pages/AdminDashboard'
+import AdminUsers from './pages/AdminUsers'
+import AdminBills from './pages/AdminBills'
+import AdminRequests from './pages/AdminRequests'
 import './index.css'
 
 function ProtectedRoute({ children }: { children: React.ReactNode }) {
@@ -28,6 +34,13 @@ function ProtectedRoute({ children }: { children: React.ReactNode }) {
   return <>{children}</>
 }
 
+function AdminRoute({ children }: { children: React.ReactNode }) {
+  if (!checkAdminAuth()) {
+    return <Navigate to="/admin/login" replace />
+  }
+  return <>{children}</>
+}
+
 function AppRoutes() {
   const { user } = useAuth()
 
@@ -43,6 +56,18 @@ function AppRoutes() {
         <Route path="bills" element={<Bills />} />
         <Route path="meters" element={<Meters />} />
         <Route path="requests" element={<Requests />} />
+      </Route>
+
+      <Route path="/admin/login" element={<AdminLogin onLogin={() => window.location.href = '/admin'} />} />
+      <Route path="/admin" element={
+        <AdminRoute>
+          <AdminApp />
+        </AdminRoute>
+      }>
+        <Route index element={<AdminDashboard />} />
+        <Route path="users" element={<AdminUsers />} />
+        <Route path="bills" element={<AdminBills />} />
+        <Route path="requests" element={<AdminRequests />} />
       </Route>
     </Routes>
   )
