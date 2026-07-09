@@ -16,7 +16,6 @@ export function PricingPage() {
 
   return (
     <div className="min-h-screen bg-gradient-to-br from-slate-50 via-teal-50 to-cyan-50">
-      {/* Header */}
       <header className="bg-white/80 backdrop-blur-lg border-b border-slate-200 sticky top-0 z-50">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
           <div className="flex items-center justify-between h-16">
@@ -40,7 +39,6 @@ export function PricingPage() {
       </header>
 
       <main className="max-w-6xl mx-auto px-4 sm:px-6 lg:px-8 py-12">
-        {/* Hero */}
         <div className="text-center mb-12">
           <h2 className="text-4xl font-bold text-slate-800 mb-4">
             Оберіть план для вашого ОСББ
@@ -51,7 +49,6 @@ export function PricingPage() {
           </p>
         </div>
 
-        {/* Billing Toggle */}
         <div className="flex items-center justify-center gap-4 mb-12">
           <button
             onClick={() => setBillingCycle('monthly')}
@@ -78,7 +75,6 @@ export function PricingPage() {
           </button>
         </div>
 
-        {/* Pricing Cards */}
         <div className="grid md:grid-cols-3 gap-6 mb-12">
           {plans.map((plan) => {
             const price = PLAN_PRICES[plan.id][billingCycle];
@@ -137,7 +133,6 @@ export function PricingPage() {
           })}
         </div>
 
-        {/* CTA */}
         <div className="text-center">
           <button
             disabled={!selectedPlan}
@@ -150,37 +145,6 @@ export function PricingPage() {
           <p className="text-sm text-slate-500 mt-4">
             Безкоштовний тріал 14 днів. Кредитна картка не потрібна.
           </p>
-        </div>
-
-        {/* Features */}
-        <div className="mt-20 grid md:grid-cols-3 gap-8">
-          <div className="text-center">
-            <div className="w-14 h-14 bg-teal-100 rounded-2xl flex items-center justify-center mx-auto mb-4">
-              <Building2 className="w-7 h-7 text-teal-600" />
-            </div>
-            <h4 className="font-semibold text-slate-800 mb-2">Автоматизація ОСББ</h4>
-            <p className="text-sm text-slate-600">
-              Нарахування комунальних, генерація квитанцій, облік показників лічильників
-            </p>
-          </div>
-          <div className="text-center">
-            <div className="w-14 h-14 bg-teal-100 rounded-2xl flex items-center justify-center mx-auto mb-4">
-              <Users className="w-7 h-7 text-teal-600" />
-            </div>
-            <h4 className="font-semibold text-slate-800 mb-2">Доступ для жителів</h4>
-            <p className="text-sm text-slate-600">
-              Особистий кабінет для кожного жителя, перегляд нарахувань та оплата онлайн
-            </p>
-          </div>
-          <div className="text-center">
-            <div className="w-14 h-14 bg-teal-100 rounded-2xl flex items-center justify-center mx-auto mb-4">
-              <Zap className="w-7 h-7 text-teal-600" />
-            </div>
-            <h4 className="font-semibold text-slate-800 mb-2">Інтеграція з банками</h4>
-            <p className="text-sm text-slate-600">
-              Автоматичний імпорт банківських виписок, інтеграція з Monobank та іншими банками
-            </p>
-          </div>
         </div>
       </main>
     </div>

@@ -1,4 +1,4 @@
-import { Building2, Home, FileText, Settings, Users, Wrench } from 'lucide-react';
+import { Building2, Chrome as Home, FileText, Settings, Users, Wrench } from 'lucide-react';
 import { useAuth } from '../context/AuthContext';
 import { UserMenu } from '../components/UserMenu';
 

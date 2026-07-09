@@ -1,5 +1,3 @@
-// Database types for OSBB Platform
-
 export type TenantStatus = 'trial' | 'active' | 'past_due' | 'suspended';
 export type SubscriptionPlan = 'basic' | 'pro' | 'enterprise';
 export type SubscriptionStatus = 'trial' | 'active' | 'past_due' | 'canceled' | 'unpaid';
@@ -29,8 +27,6 @@ export interface Subscription {
   plan: SubscriptionPlan;
   status: SubscriptionStatus;
   price_per_month: number;
-  stripe_subscription_id?: string;
-  stripe_customer_id?: string;
   trial_ends_at?: string;
   current_period_start?: string;
   current_period_end?: string;
@@ -65,7 +61,6 @@ export interface Profile {
   created_at: string;
 }
 
-// Subscription plan prices
 export const PLAN_PRICES: Record<SubscriptionPlan, { monthly: number; yearly: number }> = {
   basic: { monthly: 500, yearly: 5000 },
   pro: { monthly: 1500, yearly: 15000 },

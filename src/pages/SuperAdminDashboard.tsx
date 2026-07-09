@@ -1,5 +1,5 @@
 import { useState, useEffect } from 'react';
-import { Building2, Plus, Search, MoreVertical, Users, Home, CreditCard, Settings, Check, X, CreditCard as Edit, Trash2 } from 'lucide-react';
+import { Building2, Plus, Search, Settings, Check, Users, CreditCard } from 'lucide-react';
 import { supabase } from '../lib/supabase';
 import { useAuth } from '../context/AuthContext';
 import { UserMenu } from '../components/UserMenu';
@@ -39,7 +39,7 @@ export function SuperAdminDashboard() {
   }
 
   const filteredTenants = tenants.filter((t) =>
-    t.name.toLowerCase().includes(searchQuery.toLowerCase()) ||
+    t.name?.toLowerCase().includes(searchQuery.toLowerCase()) ||
     t.city?.toLowerCase().includes(searchQuery.toLowerCase())
   );
 
@@ -133,7 +133,7 @@ export function SuperAdminDashboard() {
                 {payments.map((p) => (
                   <tr key={p.id} className="border-t border-slate-700">
                     <td className="px-4 py-3 text-sm text-white">{new Date(p.created_at).toLocaleDateString()}</td>
-                    <td className="px-4 py-3 text-sm text-white">{p.amount.toLocaleString()} грн</td>
+                    <td className="px-4 py-3 text-sm text-white">{p.amount?.toLocaleString()} грн</td>
                     <td className="px-4 py-3">
                       <span className={`px-2 py-1 rounded text-xs ${
                         p.status === 'paid' ? 'bg-green-500/20 text-green-400' :

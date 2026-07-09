@@ -1,6 +1,6 @@
 import { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { Building2, User, Phone, Mail, Lock, Save } from 'lucide-react';
+import { User, Phone, Lock, Save } from 'lucide-react';
 import { useAuth } from '../context/AuthContext';
 import { supabase } from '../lib/supabase';
 
@@ -72,11 +72,9 @@ export function ProfilePage() {
       <header className="bg-white/80 backdrop-blur-lg border-b border-slate-200 sticky top-0 z-50">
         <div className="max-w-4xl mx-auto px-4 sm:px-6 lg:px-8">
           <div className="flex items-center justify-between h-16">
-            <div className="flex items-center gap-3">
-              <button onClick={() => navigate(-1)} className="text-slate-600 hover:text-slate-800">
-                ← Назад
-              </button>
-            </div>
+            <button onClick={() => navigate(-1)} className="text-slate-600 hover:text-slate-800">
+              ← Назад
+            </button>
             <div className="flex items-center gap-3">
               <div className="w-8 h-8 bg-gradient-to-br from-teal-500 to-cyan-600 rounded-lg flex items-center justify-center">
                 <User className="w-4 h-4 text-white" />
@@ -100,11 +98,8 @@ export function ProfilePage() {
           </div>
 
           <div className="p-6 space-y-6">
-            {/* Profile Fields */}
             <div>
-              <label className="block text-sm font-medium text-slate-700 mb-1">
-                ПІБ
-              </label>
+              <label className="block text-sm font-medium text-slate-700 mb-1">ПІБ</label>
               <div className="relative">
                 <input
                   type="text"
@@ -139,7 +134,6 @@ export function ProfilePage() {
               Зберегти
             </button>
 
-            {/* Password Section */}
             <div className="pt-6 border-t border-slate-200">
               <button
                 onClick={() => setIsPasswordSection(!isPasswordSection)}

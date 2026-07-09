@@ -1,6 +1,6 @@
-import { useState, useEffect } from 'react';
+import { useState } from 'react';
 import { useNavigate, useSearchParams } from 'react-router-dom';
-import { Building2, Users, CreditCard, FileText, Check, Search, AlertCircle, ArrowLeft, Loader2 } from 'lucide-react';
+import { Building2, Users, CreditCard, FileText, Check, Search, CircleAlert as AlertCircle, ArrowLeft, Loader as Loader2 } from 'lucide-react';
 import { supabase } from '../lib/supabase';
 import { PLAN_PRICES, PLAN_FEATURES, type SubscriptionPlan } from '../types/database';
 
@@ -19,26 +19,21 @@ export function OsbbRegisterPage() {
   const initialPlan = (searchParams.get('plan') as SubscriptionPlan) || 'pro';
   const initialBilling = searchParams.get('billing') || 'yearly';
 
-  // Step 1: EDRPOU
   const [edrpou, setEdrpou] = useState('');
   const [edrpouData, setEdrpouData] = useState<EDRPOUData | null>(null);
   const [edrpouLoading, setEdrpouLoading] = useState(false);
   const [edrpouError, setEdrpouError] = useState('');
 
-  // Step 2: Admin details
   const [adminEmail, setAdminEmail] = useState('');
   const [adminPassword, setAdminPassword] = useState('');
   const [adminName, setAdminName] = useState('');
   const [adminPhone, setAdminPhone] = useState('');
 
-  // Step 3: Subscription
   const [plan, setPlan] = useState<SubscriptionPlan>(initialPlan);
   const [billingCycle, setBillingCycle] = useState<'monthly' | 'yearly'>(initialBilling as 'monthly' | 'yearly');
 
-  // Step 4: Payment method
   const [paymentMethod, setPaymentMethod] = useState<'card' | 'iban'>('card');
 
-  // UI State
   const [step, setStep] = useState(1);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState('');
@@ -69,7 +64,6 @@ export function OsbbRegisterPage() {
         setAdminName(data.shortName || data.name);
       }
     } catch (err) {
-      // Mock data for demo if API not configured
       setEdrpouData({
         name: `ОСББ "БУДИНОК-${edrpou.slice(-4)}"`,
         shortName: `ОСББ "${edrpou.slice(-4)}"`,
@@ -88,21 +82,15 @@ export function OsbbRegisterPage() {
     setError('');
 
     try {
-      // 1. Create auth user
       const { data: authData, error: authError } = await supabase.auth.signUp({
         email: adminEmail,
         password: adminPassword,
-        options: {
-          data: {
-            full_name: adminName,
-          },
-        },
+        options: { data: { full_name: adminName } },
       });
 
       if (authError) throw authError;
       if (!authData.user) throw new Error('Не вдалося створити користувача');
 
-      // 2. Create tenant
       const slug = edrpou.toLowerCase();
       const { data: tenantData, error: tenantError } = await supabase
         .from('tenants')
@@ -124,7 +112,6 @@ export function OsbbRegisterPage() {
 
       if (tenantError) throw tenantError;
 
-      // 3. Update profile with tenant_id and role
       await supabase
         .from('profiles')
         .update({
@@ -135,7 +122,6 @@ export function OsbbRegisterPage() {
         })
         .eq('id', authData.user.id);
 
-      // 4. Create subscription
       const trialEnd = new Date();
       trialEnd.setDate(trialEnd.getDate() + 14);
 
@@ -147,7 +133,6 @@ export function OsbbRegisterPage() {
         trial_ends_at: trialEnd.toISOString(),
       });
 
-      // 5. Create payment record
       const invoiceNumber = `INV-${Date.now().toString(36).toUpperCase()}`;
 
       await supabase.from('payments').insert({
@@ -160,9 +145,7 @@ export function OsbbRegisterPage() {
         description: `Підписка ${plan} (${billingCycle === 'yearly' ? 'річна' : 'місячна'})`,
       });
 
-      // 6. Process payment
       if (paymentMethod === 'card') {
-        // Redirect to Monobank payment
         const { data: paymentData } = await supabase.functions.invoke('mono-create-payment', {
           body: {
             tenantId: tenantData.id,
@@ -178,8 +161,7 @@ export function OsbbRegisterPage() {
         }
       }
 
-      // IBAN payment -> show invoice
-      navigate(`/invoice/${invoiceNumber}`);
+      navigate('/admin/dashboard');
     } catch (err) {
       console.error('Registration error:', err);
       setError(err instanceof Error ? err.message : 'Помилка реєстрації');
@@ -190,7 +172,6 @@ export function OsbbRegisterPage() {
 
   return (
     <div className="min-h-screen bg-gradient-to-br from-slate-50 via-teal-50 to-cyan-50">
-      {/* Header */}
       <header className="bg-white/80 backdrop-blur-lg border-b border-slate-200 sticky top-0 z-50">
         <div className="max-w-4xl mx-auto px-4 sm:px-6 lg:px-8">
           <div className="flex items-center justify-between h-16">
@@ -209,16 +190,11 @@ export function OsbbRegisterPage() {
       </header>
 
       <main className="max-w-4xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
-        {/* Progress */}
         <div className="flex items-center justify-center mb-8">
           {[1, 2, 3, 4].map((s) => (
             <div key={s} className="flex items-center">
               <div className={`w-10 h-10 rounded-full flex items-center justify-center font-medium ${
-                s < step
-                  ? 'bg-teal-500 text-white'
-                  : s === step
-                  ? 'bg-gradient-to-br from-teal-500 to-cyan-600 text-white shadow-lg'
-                  : 'bg-slate-200 text-slate-500'
+                s < step ? 'bg-teal-500 text-white' : s === step ? 'bg-gradient-to-br from-teal-500 to-cyan-600 text-white shadow-lg' : 'bg-slate-200 text-slate-500'
               }`}>
                 {s < step ? <Check className="w-5 h-5" /> : s}
               </div>
@@ -227,7 +203,6 @@ export function OsbbRegisterPage() {
           ))}
         </div>
 
-        {/* Step 1: EDRPOU */}
         {step === 1 && (
           <div className="bg-white rounded-2xl shadow-lg p-6">
             <div className="flex items-center gap-3 mb-6">
@@ -241,9 +216,7 @@ export function OsbbRegisterPage() {
             </div>
 
             <div className="mb-6">
-              <label className="block text-sm font-medium text-slate-700 mb-2">
-                Код ЄДРПОУ (8 цифр)
-              </label>
+              <label className="block text-sm font-medium text-slate-700 mb-2">Код ЄДРПОУ (8 цифр)</label>
               <div className="flex gap-3">
                 <input
                   type="text"
@@ -292,7 +265,6 @@ export function OsbbRegisterPage() {
           </div>
         )}
 
-        {/* Step 2: Admin Details */}
         {step === 2 && (
           <div className="bg-white rounded-2xl shadow-lg p-6">
             <div className="flex items-center gap-3 mb-6">
@@ -301,7 +273,7 @@ export function OsbbRegisterPage() {
               </div>
               <div>
                 <h2 className="text-xl font-bold text-slate-800">Адміністратор ОСББ</h2>
-                <p className="text-sm text-slate-500">Цей користувач зможете керувати платформою</p>
+                <p className="text-sm text-slate-500">Цей користувач зможе керувати платформою</p>
               </div>
             </div>
 
@@ -352,10 +324,7 @@ export function OsbbRegisterPage() {
             </div>
 
             <div className="flex gap-3 mt-6">
-              <button
-                onClick={() => setStep(1)}
-                className="flex-1 py-3 border border-slate-200 text-slate-600 rounded-xl hover:bg-slate-50 transition-colors"
-              >
+              <button onClick={() => setStep(1)} className="flex-1 py-3 border border-slate-200 text-slate-600 rounded-xl hover:bg-slate-50 transition-colors">
                 Назад
               </button>
               <button
@@ -369,7 +338,6 @@ export function OsbbRegisterPage() {
           </div>
         )}
 
-        {/* Step 3: Subscription */}
         {step === 3 && (
           <div className="bg-white rounded-2xl shadow-lg p-6">
             <div className="flex items-center gap-3 mb-6">
@@ -382,41 +350,29 @@ export function OsbbRegisterPage() {
               </div>
             </div>
 
-            {/* Billing Toggle */}
             <div className="flex gap-3 mb-6">
               <button
                 onClick={() => setBillingCycle('monthly')}
-                className={`flex-1 py-2 rounded-lg font-medium ${
-                  billingCycle === 'monthly'
-                    ? 'bg-teal-500 text-white'
-                    : 'bg-slate-100 text-slate-600'
-                }`}
+                className={`flex-1 py-2 rounded-lg font-medium ${billingCycle === 'monthly' ? 'bg-teal-500 text-white' : 'bg-slate-100 text-slate-600'}`}
               >
                 Щомісяця
               </button>
               <button
                 onClick={() => setBillingCycle('yearly')}
-                className={`flex-1 py-2 rounded-lg font-medium flex items-center justify-center gap-2 ${
-                  billingCycle === 'yearly'
-                    ? 'bg-teal-500 text-white'
-                    : 'bg-slate-100 text-slate-600'
-                }`}
+                className={`flex-1 py-2 rounded-lg font-medium flex items-center justify-center gap-2 ${billingCycle === 'yearly' ? 'bg-teal-500 text-white' : 'bg-slate-100 text-slate-600'}`}
               >
                 Щорічно
                 <span className="text-xs bg-green-100 text-green-700 px-2 py-0.5 rounded-full">-17%</span>
               </button>
             </div>
 
-            {/* Plans */}
             <div className="grid gap-4">
               {(['basic', 'pro', 'enterprise'] as SubscriptionPlan[]).map((p) => (
                 <button
                   key={p}
                   onClick={() => setPlan(p)}
                   className={`p-4 rounded-xl text-left transition-all ${
-                    plan === p
-                      ? 'bg-gradient-to-r from-teal-500 to-cyan-600 text-white'
-                      : 'bg-slate-100 text-slate-800 hover:bg-slate-200'
+                    plan === p ? 'bg-gradient-to-r from-teal-500 to-cyan-600 text-white' : 'bg-slate-100 text-slate-800 hover:bg-slate-200'
                   }`}
                 >
                   <div className="flex items-center justify-between">
@@ -438,23 +394,16 @@ export function OsbbRegisterPage() {
             </div>
 
             <div className="flex gap-3 mt-6">
-              <button
-                onClick={() => setStep(2)}
-                className="flex-1 py-3 border border-slate-200 text-slate-600 rounded-xl hover:bg-slate-50 transition-colors"
-              >
+              <button onClick={() => setStep(2)} className="flex-1 py-3 border border-slate-200 text-slate-600 rounded-xl hover:bg-slate-50 transition-colors">
                 Назад
               </button>
-              <button
-                onClick={() => setStep(4)}
-                className="flex-1 py-3 bg-gradient-to-r from-teal-500 to-cyan-600 text-white rounded-xl hover:from-teal-600 hover:to-cyan-700 transition-all shadow-lg"
-              >
+              <button onClick={() => setStep(4)} className="flex-1 py-3 bg-gradient-to-r from-teal-500 to-cyan-600 text-white rounded-xl hover:from-teal-600 hover:to-cyan-700 transition-all shadow-lg">
                 Продовжити
               </button>
             </div>
           </div>
         )}
 
-        {/* Step 4: Payment */}
         {step === 4 && (
           <div className="bg-white rounded-2xl shadow-lg p-6">
             <div className="flex items-center gap-3 mb-6">
@@ -467,14 +416,11 @@ export function OsbbRegisterPage() {
               </div>
             </div>
 
-            {/* Payment Methods */}
             <div className="grid gap-4 mb-6">
               <button
                 onClick={() => setPaymentMethod('card')}
                 className={`p-4 rounded-xl text-left transition-all flex items-center gap-4 ${
-                  paymentMethod === 'card'
-                    ? 'bg-gradient-to-r from-teal-500 to-cyan-600 text-white'
-                    : 'bg-slate-100 text-slate-800 hover:bg-slate-200'
+                  paymentMethod === 'card' ? 'bg-gradient-to-r from-teal-500 to-cyan-600 text-white' : 'bg-slate-100 text-slate-800 hover:bg-slate-200'
                 }`}
               >
                 <CreditCard className="w-6 h-6" />
@@ -487,9 +433,7 @@ export function OsbbRegisterPage() {
               <button
                 onClick={() => setPaymentMethod('iban')}
                 className={`p-4 rounded-xl text-left transition-all flex items-center gap-4 ${
-                  paymentMethod === 'iban'
-                    ? 'bg-gradient-to-r from-teal-500 to-cyan-600 text-white'
-                    : 'bg-slate-100 text-slate-800 hover:bg-slate-200'
+                  paymentMethod === 'iban' ? 'bg-gradient-to-r from-teal-500 to-cyan-600 text-white' : 'bg-slate-100 text-slate-800 hover:bg-slate-200'
                 }`}
               >
                 <FileText className="w-6 h-6" />
@@ -500,7 +444,6 @@ export function OsbbRegisterPage() {
               </button>
             </div>
 
-            {/* Summary */}
             <div className="bg-slate-50 rounded-xl p-4 mb-6">
               <h3 className="font-semibold text-slate-800 mb-3">Підсумок</h3>
               <div className="space-y-2 text-sm">
@@ -538,11 +481,7 @@ export function OsbbRegisterPage() {
             )}
 
             <div className="flex gap-3">
-              <button
-                onClick={() => setStep(3)}
-                disabled={loading}
-                className="flex-1 py-3 border border-slate-200 text-slate-600 rounded-xl hover:bg-slate-50 transition-colors disabled:opacity-50"
-              >
+              <button onClick={() => setStep(3)} disabled={loading} className="flex-1 py-3 border border-slate-200 text-slate-600 rounded-xl hover:bg-slate-50 transition-colors disabled:opacity-50">
                 Назад
               </button>
               <button
