@@ -17,22 +17,18 @@ function FullScreenLoader() {
   );
 }
 
-export function dashboardPathForRole(role: string | undefined) {
+export function dashboardPathForRole(role: string | undefined, isSuperAdmin: boolean = false) {
+  if (isSuperAdmin) return '/super-admin';
   return role === 'admin' ? '/admin/dashboard' : '/user/dashboard';
 }
 
 interface ProtectedRouteProps {
-  role: 'admin' | 'resident';
+  role?: 'admin' | 'user' | 'super_admin';
+  requireSuperAdmin?: boolean;
   children: ReactNode;
 }
 
-/**
- * Guards a route behind an authenticated Supabase session.
- * - Unauthenticated users are redirected back to /login.
- * - Authenticated users whose profile role does not match the route's
- *   required role are redirected to their own dashboard instead.
- */
-export function ProtectedRoute({ role, children }: ProtectedRouteProps) {
+export function ProtectedRoute({ role, requireSuperAdmin, children }: ProtectedRouteProps) {
   const { user, profile, loading, profileLoading } = useAuth();
 
   if (loading || (user && profileLoading && !profile)) {
@@ -47,7 +43,18 @@ export function ProtectedRoute({ role, children }: ProtectedRouteProps) {
     return <FullScreenLoader />;
   }
 
-  if (profile.role !== role) {
+  // Super admin check
+  if (requireSuperAdmin && !profile.is_super_admin) {
+    return <Navigate to={dashboardPathForRole(profile.role)} replace />;
+  }
+
+  // Super admin can access everything
+  if (profile.is_super_admin) {
+    return <>{children}</>;
+  }
+
+  // Role check
+  if (role && profile.role !== role) {
     return <Navigate to={dashboardPathForRole(profile.role)} replace />;
   }
 

@@ -4,6 +4,7 @@ import { AuthPage } from './pages/AuthPage';
 import { AdminDashboardPage } from './pages/AdminDashboardPage';
 import { UserDashboardPage } from './pages/UserDashboardPage';
 import { ProfilePage } from './pages/ProfilePage';
+import { SuperAdminDashboard } from './pages/SuperAdminDashboard';
 import { ProtectedRoute, dashboardPathForRole } from './components/ProtectedRoute';
 import { SubscriptionGuard } from './components/SubscriptionGuard';
 import { Building2 } from 'lucide-react';
@@ -27,7 +28,7 @@ function RootRedirect() {
 
   if (!user) return <Navigate to="/login" replace />;
   if (!profile) return <Navigate to="/login" replace />;
-  return <Navigate to={dashboardPathForRole(profile.role)} replace />;
+  return <Navigate to={dashboardPathForRole(profile.role, profile.is_super_admin)} replace />;
 }
 
 function App() {
@@ -35,6 +36,18 @@ function App() {
     <SubscriptionGuard>
       <Routes>
         <Route path="/login" element={<AuthPage />} />
+
+        {/* Super Admin Routes - No subscription guard needed */}
+        <Route
+          path="/super-admin"
+          element={
+            <ProtectedRoute requireSuperAdmin>
+              <SuperAdminDashboard />
+            </ProtectedRoute>
+          }
+        />
+
+        {/* Tenant Admin Routes */}
         <Route
           path="/admin/dashboard"
           element={
@@ -43,6 +56,8 @@ function App() {
             </ProtectedRoute>
           }
         />
+
+        {/* User Routes */}
         <Route
           path="/user/dashboard"
           element={
@@ -51,6 +66,7 @@ function App() {
             </ProtectedRoute>
           }
         />
+
         <Route
           path="/profile"
           element={
@@ -59,6 +75,7 @@ function App() {
             </ProtectedRoute>
           }
         />
+
         <Route path="/" element={<RootRedirect />} />
         <Route path="*" element={<Navigate to="/" replace />} />
       </Routes>
