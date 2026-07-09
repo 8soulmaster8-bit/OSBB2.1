@@ -1,90 +1,62 @@
-import { useEffect, useRef, useState } from 'react';
-import { useNavigate } from 'react-router-dom';
-import { User, LogOut, ChevronDown, Home } from 'lucide-react';
+import { useState } from 'react';
+import { User, LogOut, Settings, ChevronDown, Building2 } from 'lucide-react';
 import { useAuth } from '../context/AuthContext';
-
-function initialsOf(fullName: string | undefined) {
-  if (!fullName) return '?';
-  const parts = fullName.trim().split(/\s+/).filter(Boolean);
-  if (parts.length === 0) return '?';
-  if (parts.length === 1) return parts[0][0]?.toUpperCase() ?? '?';
-  return (parts[0][0] + parts[1][0]).toUpperCase();
-}
+import { useNavigate } from 'react-router-dom';
 
 export function UserMenu() {
   const { profile, signOut } = useAuth();
   const navigate = useNavigate();
-  const [open, setOpen] = useState(false);
-  const containerRef = useRef<HTMLDivElement>(null);
+  const [isOpen, setIsOpen] = useState(false);
 
-  useEffect(() => {
-    function handleClickOutside(e: MouseEvent) {
-      if (containerRef.current && !containerRef.current.contains(e.target as Node)) {
-        setOpen(false);
-      }
-    }
-    document.addEventListener('mousedown', handleClickOutside);
-    return () => document.removeEventListener('mousedown', handleClickOutside);
-  }, []);
-
-  const handleSignOut = async () => {
-    setOpen(false);
-    await signOut();
-    navigate('/login', { replace: true });
-  };
+  if (!profile) return null;
 
   return (
-    <div className="relative" ref={containerRef}>
+    <div className="relative">
       <button
-        type="button"
-        onClick={() => setOpen((v) => !v)}
-        className="flex items-center gap-2.5 pl-1.5 pr-2.5 py-1.5 rounded-xl hover:bg-slate-100 transition-colors"
+        onClick={() => setIsOpen(!isOpen)}
+        className="flex items-center gap-2 py-2 px-3 bg-white/80 hover:bg-white rounded-lg border border-slate-200 transition-colors"
       >
-        <div className="w-9 h-9 rounded-full bg-gradient-to-br from-teal-500 to-cyan-600 flex items-center justify-center text-white text-sm font-semibold shadow-sm flex-shrink-0">
-          {initialsOf(profile?.full_name)}
+        <div className="w-8 h-8 bg-gradient-to-br from-teal-500 to-cyan-600 rounded-full flex items-center justify-center">
+          <User className="w-4 h-4 text-white" />
         </div>
-        <div className="hidden sm:block text-left leading-tight">
-          <p className="text-sm font-semibold text-slate-800 max-w-[140px] truncate">
-            {profile?.full_name || 'Користувач'}
-          </p>
-          <p className="text-xs text-slate-500">
-            {profile?.apartment_number ? `Кв. ${profile.apartment_number}` : '—'}
-          </p>
+        <div className="hidden sm:block text-left">
+          <p className="text-sm font-medium text-slate-800">{profile.full_name || 'Користувач'}</p>
+          <p className="text-xs text-slate-500">{profile.email}</p>
         </div>
-        <ChevronDown className={`w-4 h-4 text-slate-400 transition-transform ${open ? 'rotate-180' : ''}`} />
+        <ChevronDown className="w-4 h-4 text-slate-400" />
       </button>
 
-      {open && (
-        <div className="absolute right-0 mt-2 w-60 bg-white rounded-xl shadow-xl shadow-slate-200/60 border border-slate-200 py-2 z-50">
-          <div className="px-4 py-2.5 border-b border-slate-100 sm:hidden">
-            <p className="text-sm font-semibold text-slate-800 truncate">{profile?.full_name || 'Користувач'}</p>
-            <p className="text-xs text-slate-500 flex items-center gap-1 mt-0.5">
-              <Home className="w-3 h-3" />
-              {profile?.apartment_number ? `Кв. ${profile.apartment_number}` : '—'}
-            </p>
+      {isOpen && (
+        <>
+          <div className="fixed inset-0 z-10" onClick={() => setIsOpen(false)} />
+          <div className="absolute right-0 top-full mt-2 w-56 bg-white rounded-lg shadow-xl border border-slate-200 py-1 z-20">
+            <div className="px-4 py-2 border-b border-slate-100 sm:hidden">
+              <p className="text-sm font-medium text-slate-800">{profile.full_name}</p>
+              <p className="text-xs text-slate-500">{profile.email}</p>
+            </div>
+            <button
+              onClick={() => {
+                setIsOpen(false);
+                navigate('/profile');
+              }}
+              className="w-full px-4 py-2 text-left text-sm text-slate-700 hover:bg-slate-50 flex items-center gap-2"
+            >
+              <Settings className="w-4 h-4" />
+              Налаштування
+            </button>
+            <button
+              onClick={async () => {
+                setIsOpen(false);
+                await signOut();
+                navigate('/login');
+              }}
+              className="w-full px-4 py-2 text-left text-sm text-red-600 hover:bg-red-50 flex items-center gap-2"
+            >
+              <LogOut className="w-4 h-4" />
+              Вийти
+            </button>
           </div>
-
-          <button
-            type="button"
-            onClick={() => {
-              setOpen(false);
-              navigate('/profile');
-            }}
-            className="w-full flex items-center gap-2.5 px-4 py-2.5 text-sm text-slate-700 hover:bg-slate-50 transition-colors"
-          >
-            <User className="w-4 h-4 text-slate-400" />
-            Профіль
-          </button>
-
-          <button
-            type="button"
-            onClick={handleSignOut}
-            className="w-full flex items-center gap-2.5 px-4 py-2.5 text-sm text-red-600 hover:bg-red-50 transition-colors"
-          >
-            <LogOut className="w-4 h-4" />
-            Вийти
-          </button>
-        </div>
+        </>
       )}
     </div>
   );

@@ -4,6 +4,8 @@ import { AuthPage } from './pages/AuthPage';
 import { AdminDashboardPage } from './pages/AdminDashboardPage';
 import { UserDashboardPage } from './pages/UserDashboardPage';
 import { ProfilePage } from './pages/ProfilePage';
+import { PricingPage } from './pages/PricingPage';
+import { OsbbRegisterPage } from './pages/OsbbRegisterPage';
 import { SuperAdminDashboard } from './pages/SuperAdminDashboard';
 import { ProtectedRoute, dashboardPathForRole } from './components/ProtectedRoute';
 import { SubscriptionGuard } from './components/SubscriptionGuard';
@@ -36,45 +38,13 @@ function App() {
     <SubscriptionGuard>
       <Routes>
         <Route path="/login" element={<AuthPage />} />
+        <Route path="/pricing" element={<PricingPage />} />
+        <Route path="/register" element={<OsbbRegisterPage />} />
 
-        {/* Super Admin Routes - No subscription guard needed */}
-        <Route
-          path="/super-admin"
-          element={
-            <ProtectedRoute requireSuperAdmin>
-              <SuperAdminDashboard />
-            </ProtectedRoute>
-          }
-        />
-
-        {/* Tenant Admin Routes */}
-        <Route
-          path="/admin/dashboard"
-          element={
-            <ProtectedRoute role="admin">
-              <AdminDashboardPage />
-            </ProtectedRoute>
-          }
-        />
-
-        {/* User Routes */}
-        <Route
-          path="/user/dashboard"
-          element={
-            <ProtectedRoute role="user">
-              <UserDashboardPage />
-            </ProtectedRoute>
-          }
-        />
-
-        <Route
-          path="/profile"
-          element={
-            <ProtectedRoute>
-              <ProfilePage />
-            </ProtectedRoute>
-          }
-        />
+        <Route path="/super-admin" element={<ProtectedRoute requireSuperAdmin><SuperAdminDashboard /></ProtectedRoute>} />
+        <Route path="/admin/dashboard" element={<ProtectedRoute role="admin"><AdminDashboardPage /></ProtectedRoute>} />
+        <Route path="/user/dashboard" element={<ProtectedRoute role="user"><UserDashboardPage /></ProtectedRoute>} />
+        <Route path="/profile" element={<ProtectedRoute><ProfilePage /></ProtectedRoute>} />
 
         <Route path="/" element={<RootRedirect />} />
         <Route path="*" element={<Navigate to="/" replace />} />

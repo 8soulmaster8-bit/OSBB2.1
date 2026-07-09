@@ -1,27 +1,24 @@
-export interface Profile {
-  id: string;
-  full_name: string;
-  apartment_number: string;
-  phone: string | null;
-  role: 'user' | 'admin';
-  square_meters: number;
-  created_at: string;
-  tenant_id: string | null;
-  is_super_admin: boolean;
-}
+// Database types for OSBB Platform
+
+export type TenantStatus = 'trial' | 'active' | 'past_due' | 'suspended';
+export type SubscriptionPlan = 'basic' | 'pro' | 'enterprise';
+export type SubscriptionStatus = 'trial' | 'active' | 'past_due' | 'canceled' | 'unpaid';
+export type PaymentStatus = 'pending' | 'paid' | 'failed' | 'refunded';
 
 export interface Tenant {
   id: string;
   name: string;
   slug: string;
   city: string;
-  address: string | null;
-  contact_email: string | null;
-  contact_phone: string | null;
-  status: 'trial' | 'active' | 'past_due' | 'suspended';
+  address?: string;
+  contact_email?: string;
+  contact_phone?: string;
   apartments_count: number;
   residents_count: number;
-  settings: Record<string, unknown>;
+  status: TenantStatus;
+  edrpou?: string;
+  legal_name?: string;
+  iban?: string;
   created_at: string;
   updated_at: string;
 }
@@ -29,97 +26,74 @@ export interface Tenant {
 export interface Subscription {
   id: string;
   tenant_id: string;
-  plan: 'basic' | 'pro' | 'enterprise';
-  status: 'trial' | 'active' | 'past_due' | 'canceled' | 'unpaid';
+  plan: SubscriptionPlan;
+  status: SubscriptionStatus;
   price_per_month: number;
-  current_period_start: string | null;
-  current_period_end: string | null;
-  trial_ends_at: string | null;
-  canceled_at: string | null;
-  stripe_customer_id: string | null;
-  stripe_subscription_id: string | null;
+  stripe_subscription_id?: string;
+  stripe_customer_id?: string;
+  trial_ends_at?: string;
+  current_period_start?: string;
+  current_period_end?: string;
   created_at: string;
-  updated_at: string;
 }
 
 export interface Payment {
   id: string;
   tenant_id: string;
-  subscription_id: string | null;
+  subscription_id?: string;
   amount: number;
   currency: string;
-  status: 'pending' | 'paid' | 'failed' | 'refunded';
-  description: string | null;
-  paid_at: string | null;
-  stripe_invoice_id: string | null;
-  stripe_payment_intent_id: string | null;
+  status: PaymentStatus;
+  payment_method?: string;
+  mono_payment_id?: string;
+  invoice_number?: string;
+  description?: string;
+  paid_at?: string;
   created_at: string;
 }
 
-export interface Meter {
+export interface Profile {
   id: string;
   user_id: string;
-  tenant_id: string | null;
-  type: 'water' | 'hot_water' | 'cold_water' | 'electricity' | 'gas';
-  current_reading: number;
-  reading_date: string;
+  tenant_id?: string;
+  email: string;
+  full_name?: string;
+  role: 'admin' | 'user';
+  is_super_admin: boolean;
+  phone?: string;
+  apartment?: string;
   created_at: string;
-  profiles?: Profile;
 }
 
-export interface MeterReading {
-  id: string;
-  meter_id: string;
-  reading: number;
-  reading_date: string;
-  submitted_at: string;
-  meters?: Meter;
-}
-
-export interface Bill {
-  id: string;
-  user_id: string;
-  tenant_id: string | null;
-  month: string;
-  amount: number;
-  status: 'paid' | 'unpaid';
-  created_at: string;
-  profiles?: Profile;
-}
-
-export interface MaintenanceRequest {
-  id: string;
-  user_id: string;
-  tenant_id: string | null;
-  topic: string;
-  description: string | null;
-  status: 'new' | 'in_progress' | 'completed';
-  master: string | null;
-  created_at: string;
-  profiles?: Profile;
-}
-
-export type RequestStatus = 'new' | 'in_progress' | 'completed';
-
-export const REQUEST_STATUS_LABELS: Record<RequestStatus, string> = {
-  new: 'В обработке',
-  in_progress: 'Мастер назначен',
-  completed: 'Выполнено',
+// Subscription plan prices
+export const PLAN_PRICES: Record<SubscriptionPlan, { monthly: number; yearly: number }> = {
+  basic: { monthly: 500, yearly: 5000 },
+  pro: { monthly: 1500, yearly: 15000 },
+  enterprise: { monthly: 3000, yearly: 30000 },
 };
 
-export type TenantStatus = 'trial' | 'active' | 'past_due' | 'suspended';
-
-export const TENANT_STATUS_LABELS: Record<TenantStatus, string> = {
-  trial: 'Триал',
-  active: 'Активен',
-  past_due: 'Просрочен',
-  suspended: 'Заблокирован',
-};
-
-export type SubscriptionPlan = 'basic' | 'pro' | 'enterprise';
-
-export const SUBSCRIPTION_PLAN_LABELS: Record<SubscriptionPlan, string> = {
-  basic: 'Базовый',
-  pro: 'Профессиональный',
-  enterprise: 'Корпоративный',
+export const PLAN_FEATURES: Record<SubscriptionPlan, string[]> = {
+  basic: [
+    'До 50 квартир',
+    'Облік жителів',
+    'Нарахування комунальних',
+    'Генерація квитанцій PDF',
+    'Email підтримка',
+  ],
+  pro: [
+    'До 200 квартир',
+    'Всі функції Basic',
+    'Мобільний додаток',
+    'Інтеграція банківських API',
+    'Автоматичні нарахування',
+    'Пріоритетна підтримка',
+  ],
+  enterprise: [
+    'Необмежена кількість квартир',
+    'Всі функції Pro',
+    'Персональний менеджер',
+    'Індивідуальна інтеграція',
+    'SLA 99.9%',
+    'Тренінг персоналу',
+  ],
 };

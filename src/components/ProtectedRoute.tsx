@@ -11,7 +11,7 @@ function FullScreenLoader() {
           <Building2 className="w-7 h-7 text-white" />
         </div>
         <div className="w-10 h-10 border-4 border-teal-500 border-t-transparent rounded-full animate-spin mx-auto mb-4" />
-        <p className="text-slate-600">Загрузка...</p>
+        <p className="text-slate-600">Завантаження...</p>
       </div>
     </div>
   );
@@ -23,7 +23,7 @@ export function dashboardPathForRole(role: string | undefined, isSuperAdmin: boo
 }
 
 interface ProtectedRouteProps {
-  role?: 'admin' | 'user' | 'super_admin';
+  role?: 'admin' | 'user';
   requireSuperAdmin?: boolean;
   children: ReactNode;
 }
@@ -43,17 +43,14 @@ export function ProtectedRoute({ role, requireSuperAdmin, children }: ProtectedR
     return <FullScreenLoader />;
   }
 
-  // Super admin check
   if (requireSuperAdmin && !profile.is_super_admin) {
     return <Navigate to={dashboardPathForRole(profile.role)} replace />;
   }
 
-  // Super admin can access everything
   if (profile.is_super_admin) {
     return <>{children}</>;
   }
 
-  // Role check
   if (role && profile.role !== role) {
     return <Navigate to={dashboardPathForRole(profile.role)} replace />;
   }

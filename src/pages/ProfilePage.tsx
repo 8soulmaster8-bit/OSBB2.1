@@ -1,265 +1,190 @@
 import { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
-import {
-  Building2,
-  ArrowLeft,
-  Phone,
-  Home,
-  Ruler,
-  Shield,
-  Lock,
-  Eye,
-  EyeOff,
-  CheckCircle2,
-  AlertCircle,
-  Loader2,
-} from 'lucide-react';
+import { Building2, User, Phone, Mail, Lock, Save } from 'lucide-react';
 import { useAuth } from '../context/AuthContext';
-import { dashboardPathForRole } from '../components/ProtectedRoute';
-
-function initialsOf(fullName: string | undefined) {
-  if (!fullName) return '?';
-  const parts = fullName.trim().split(/\s+/).filter(Boolean);
-  if (parts.length === 0) return '?';
-  if (parts.length === 1) return parts[0][0]?.toUpperCase() ?? '?';
-  return (parts[0][0] + parts[1][0]).toUpperCase();
-}
+import { supabase } from '../lib/supabase';
 
 export function ProfilePage() {
-  const { user, profile, updatePhone, updatePassword } = useAuth();
+  const { profile, refreshProfile } = useAuth();
   const navigate = useNavigate();
 
-  const [phone, setPhone] = useState(profile?.phone ?? '');
-  const [phoneSubmitting, setPhoneSubmitting] = useState(false);
-  const [phoneMessage, setPhoneMessage] = useState<{ type: 'success' | 'error'; text: string } | null>(null);
-
+  const [fullName, setFullName] = useState(profile?.full_name || '');
+  const [phone, setPhone] = useState(profile?.phone || '');
+  const [loading, setLoading] = useState(false);
+  const [message, setMessage] = useState('');
+  const [isPasswordSection, setIsPasswordSection] = useState(false);
   const [newPassword, setNewPassword] = useState('');
   const [confirmPassword, setConfirmPassword] = useState('');
-  const [showPassword, setShowPassword] = useState(false);
-  const [passwordSubmitting, setPasswordSubmitting] = useState(false);
-  const [passwordMessage, setPasswordMessage] = useState<{ type: 'success' | 'error'; text: string } | null>(null);
 
-  const handlePhoneSubmit = async (e: React.FormEvent) => {
-    e.preventDefault();
-    setPhoneMessage(null);
-    if (!phone.trim()) {
-      setPhoneMessage({ type: 'error', text: 'Введіть номер телефону' });
-      return;
+  const handleSaveProfile = async () => {
+    if (!profile) return;
+    setLoading(true);
+    setMessage('');
+
+    try {
+      const { error } = await supabase
+        .from('profiles')
+        .update({
+          full_name: fullName,
+          phone,
+        })
+        .eq('id', profile.id);
+
+      if (error) throw error;
+      await refreshProfile();
+      setMessage('Профіль оновлено!');
+    } catch (err) {
+      setMessage('Помилка оновлення профілю');
+    } finally {
+      setLoading(false);
     }
-    setPhoneSubmitting(true);
-    const { error } = await updatePhone(phone.trim());
-    setPhoneSubmitting(false);
-    setPhoneMessage(
-      error ? { type: 'error', text: error } : { type: 'success', text: 'Номер телефону оновлено' }
-    );
   };
 
-  const handlePasswordSubmit = async (e: React.FormEvent) => {
-    e.preventDefault();
-    setPasswordMessage(null);
-    if (newPassword.length < 6) {
-      setPasswordMessage({ type: 'error', text: 'Пароль повинен містити не менше 6 символів' });
+  const handleChangePassword = async () => {
+    if (newPassword.length < 8) {
+      setMessage('Пароль має містити мінімум 8 символів');
       return;
     }
     if (newPassword !== confirmPassword) {
-      setPasswordMessage({ type: 'error', text: 'Паролі не співпадають' });
+      setMessage('Паролі не співпадають');
       return;
     }
-    setPasswordSubmitting(true);
-    const { error } = await updatePassword(newPassword);
-    setPasswordSubmitting(false);
-    if (error) {
-      setPasswordMessage({ type: 'error', text: error });
-    } else {
-      setPasswordMessage({ type: 'success', text: 'Пароль успішно змінено' });
+
+    setLoading(true);
+    setMessage('');
+
+    try {
+      const { error } = await supabase.auth.updateUser({ password: newPassword });
+      if (error) throw error;
+      setMessage('Пароль змінено!');
       setNewPassword('');
       setConfirmPassword('');
+      setIsPasswordSection(false);
+    } catch (err) {
+      setMessage('Помилка зміни паролю');
+    } finally {
+      setLoading(false);
     }
   };
 
   return (
     <div className="min-h-screen bg-gradient-to-br from-slate-50 via-cyan-50 to-teal-50">
-      <header className="bg-white/80 backdrop-blur-lg border-b border-slate-200 sticky top-0 z-40">
-        <div className="max-w-3xl mx-auto px-4 sm:px-6 lg:px-8">
+      <header className="bg-white/80 backdrop-blur-lg border-b border-slate-200 sticky top-0 z-50">
+        <div className="max-w-4xl mx-auto px-4 sm:px-6 lg:px-8">
           <div className="flex items-center justify-between h-16">
-            <button
-              onClick={() => navigate(dashboardPathForRole(profile?.role))}
-              className="flex items-center gap-2 text-slate-500 hover:text-teal-600 transition-colors text-sm font-medium"
-            >
-              <ArrowLeft className="w-4 h-4" />
-              До кабінету
-            </button>
-
             <div className="flex items-center gap-3">
-              <div className="w-9 h-9 bg-gradient-to-br from-teal-500 to-cyan-600 rounded-xl flex items-center justify-center shadow-lg shadow-teal-500/25">
-                <Building2 className="w-5 h-5 text-white" />
+              <button onClick={() => navigate(-1)} className="text-slate-600 hover:text-slate-800">
+                ← Назад
+              </button>
+            </div>
+            <div className="flex items-center gap-3">
+              <div className="w-8 h-8 bg-gradient-to-br from-teal-500 to-cyan-600 rounded-lg flex items-center justify-center">
+                <User className="w-4 h-4 text-white" />
               </div>
-              <span className="hidden sm:block font-bold text-slate-800">ОСББ Управління</span>
+              <span className="font-semibold text-slate-800">Профіль</span>
             </div>
           </div>
         </div>
       </header>
 
-      <main className="max-w-3xl mx-auto px-4 sm:px-6 lg:px-8 py-8 space-y-6">
-        <div className="bg-white rounded-2xl shadow-xl shadow-slate-200/50 border border-slate-200 p-6 sm:p-8">
-          <div className="flex items-center gap-4">
-            <div className="w-16 h-16 rounded-full bg-gradient-to-br from-teal-500 to-cyan-600 flex items-center justify-center text-white text-xl font-bold shadow-md flex-shrink-0">
-              {initialsOf(profile?.full_name)}
+      <main className="max-w-2xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
+        <div className="bg-white rounded-2xl shadow-lg overflow-hidden">
+          <div className="bg-gradient-to-r from-teal-500 to-cyan-600 px-6 py-8">
+            <div className="w-20 h-20 bg-white/20 rounded-full flex items-center justify-center mx-auto mb-4">
+              <User className="w-10 h-10 text-white" />
             </div>
+            <h1 className="text-xl font-bold text-white text-center">
+              {profile?.full_name || 'Користувач'}
+            </h1>
+            <p className="text-teal-100 text-center text-sm">{profile?.email}</p>
+          </div>
+
+          <div className="p-6 space-y-6">
+            {/* Profile Fields */}
             <div>
-              <h1 className="text-xl font-bold text-slate-800">{profile?.full_name || 'Користувач'}</h1>
-              <p className="text-sm text-slate-500">{user?.email}</p>
-              <span
-                className={`inline-flex items-center gap-1 mt-1.5 px-2.5 py-0.5 rounded-full text-xs font-medium ${
-                  profile?.role === 'admin'
-                    ? 'bg-amber-100 text-amber-700'
-                    : 'bg-teal-100 text-teal-700'
-                }`}
-              >
-                <Shield className="w-3 h-3" />
-                {profile?.role === 'admin' ? 'Голова ОСББ' : 'Житель'}
-              </span>
-            </div>
-          </div>
-
-          <div className="grid grid-cols-2 gap-4 mt-6 pt-6 border-t border-slate-100">
-            <div className="flex items-center gap-2.5">
-              <div className="w-9 h-9 rounded-lg bg-slate-100 flex items-center justify-center flex-shrink-0">
-                <Home className="w-4 h-4 text-slate-500" />
-              </div>
-              <div>
-                <p className="text-xs text-slate-400">Квартира</p>
-                <p className="text-sm font-medium text-slate-700">{profile?.apartment_number || '—'}</p>
+              <label className="block text-sm font-medium text-slate-700 mb-1">
+                ПІБ
+              </label>
+              <div className="relative">
+                <input
+                  type="text"
+                  value={fullName}
+                  onChange={(e) => setFullName(e.target.value)}
+                  className="w-full pl-10 pr-4 py-3 border border-slate-200 rounded-xl focus:outline-none focus:ring-2 focus:ring-teal-500"
+                />
+                <User className="absolute left-3 top-1/2 -translate-y-1/2 w-5 h-5 text-slate-400" />
               </div>
             </div>
-            <div className="flex items-center gap-2.5">
-              <div className="w-9 h-9 rounded-lg bg-slate-100 flex items-center justify-center flex-shrink-0">
-                <Ruler className="w-4 h-4 text-slate-500" />
+
+            <div>
+              <label className="block text-sm font-medium text-slate-700 mb-1">Телефон</label>
+              <div className="relative">
+                <input
+                  type="tel"
+                  value={phone}
+                  onChange={(e) => setPhone(e.target.value)}
+                  placeholder="+380"
+                  className="w-full pl-10 pr-4 py-3 border border-slate-200 rounded-xl focus:outline-none focus:ring-2 focus:ring-teal-500"
+                />
+                <Phone className="absolute left-3 top-1/2 -translate-y-1/2 w-5 h-5 text-slate-400" />
               </div>
-              <div>
-                <p className="text-xs text-slate-400">Площа</p>
-                <p className="text-sm font-medium text-slate-700">{profile?.square_meters ?? '—'} м²</p>
-              </div>
             </div>
-          </div>
-        </div>
 
-        <div className="bg-white rounded-2xl shadow-xl shadow-slate-200/50 border border-slate-200 p-6 sm:p-8">
-          <h2 className="text-lg font-bold text-slate-800 mb-1">Контактні дані</h2>
-          <p className="text-sm text-slate-500 mb-5">Оновіть номер телефону для зв'язку</p>
-
-          {phoneMessage && (
-            <div
-              className={`mb-4 flex items-start gap-2 rounded-xl px-4 py-3 text-sm border ${
-                phoneMessage.type === 'success'
-                  ? 'bg-emerald-50 border-emerald-200 text-emerald-700'
-                  : 'bg-red-50 border-red-200 text-red-700'
-              }`}
-            >
-              {phoneMessage.type === 'success' ? (
-                <CheckCircle2 className="w-5 h-5 flex-shrink-0 mt-0.5" />
-              ) : (
-                <AlertCircle className="w-5 h-5 flex-shrink-0 mt-0.5" />
-              )}
-              <span>{phoneMessage.text}</span>
-            </div>
-          )}
-
-          <form onSubmit={handlePhoneSubmit} className="flex flex-col sm:flex-row gap-3">
-            <div className="relative flex-1">
-              <span className="absolute left-3.5 top-1/2 -translate-y-1/2 text-slate-400">
-                <Phone className="w-4 h-4" />
-              </span>
-              <input
-                type="tel"
-                value={phone}
-                onChange={(e) => setPhone(e.target.value)}
-                placeholder="+380..."
-                className="w-full pl-10 pr-4 py-2.5 border border-slate-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-teal-500 focus:border-transparent"
-              />
-            </div>
             <button
-              type="submit"
-              disabled={phoneSubmitting}
-              className="flex items-center justify-center gap-2 px-5 py-2.5 bg-gradient-to-r from-teal-500 to-cyan-500 text-white rounded-lg font-medium hover:from-teal-600 hover:to-cyan-600 transition-all shadow-md shadow-teal-500/25 disabled:opacity-60 disabled:cursor-not-allowed whitespace-nowrap"
+              onClick={handleSaveProfile}
+              disabled={loading}
+              className="w-full py-3 bg-gradient-to-r from-teal-500 to-cyan-600 text-white rounded-xl hover:from-teal-600 hover:to-cyan-700 disabled:opacity-50 flex items-center justify-center gap-2 transition-all"
             >
-              {phoneSubmitting ? <Loader2 className="w-4 h-4 animate-spin" /> : 'Зберегти'}
+              <Save className="w-5 h-5" />
+              Зберегти
             </button>
-          </form>
-        </div>
 
-        <div className="bg-white rounded-2xl shadow-xl shadow-slate-200/50 border border-slate-200 p-6 sm:p-8">
-          <h2 className="text-lg font-bold text-slate-800 mb-1">Зміна пароля</h2>
-          <p className="text-sm text-slate-500 mb-5">Мінімум 6 символів</p>
+            {/* Password Section */}
+            <div className="pt-6 border-t border-slate-200">
+              <button
+                onClick={() => setIsPasswordSection(!isPasswordSection)}
+                className="w-full flex items-center justify-between py-2 text-slate-700 hover:text-slate-900"
+              >
+                <span className="flex items-center gap-2">
+                  <Lock className="w-5 h-5 text-slate-400" />
+                  Змінити пароль
+                </span>
+                <span className="text-slate-400">{isPasswordSection ? '▲' : '▼'}</span>
+              </button>
 
-          {passwordMessage && (
-            <div
-              className={`mb-4 flex items-start gap-2 rounded-xl px-4 py-3 text-sm border ${
-                passwordMessage.type === 'success'
-                  ? 'bg-emerald-50 border-emerald-200 text-emerald-700'
-                  : 'bg-red-50 border-red-200 text-red-700'
-              }`}
-            >
-              {passwordMessage.type === 'success' ? (
-                <CheckCircle2 className="w-5 h-5 flex-shrink-0 mt-0.5" />
-              ) : (
-                <AlertCircle className="w-5 h-5 flex-shrink-0 mt-0.5" />
-              )}
-              <span>{passwordMessage.text}</span>
-            </div>
-          )}
-
-          <form onSubmit={handlePasswordSubmit} className="space-y-4">
-            <div className="grid sm:grid-cols-2 gap-4">
-              <div>
-                <label className="block text-sm font-medium text-slate-700 mb-1.5">Новий пароль</label>
-                <div className="relative">
-                  <span className="absolute left-3.5 top-1/2 -translate-y-1/2 text-slate-400">
-                    <Lock className="w-4 h-4" />
-                  </span>
+              {isPasswordSection && (
+                <div className="mt-4 space-y-4">
                   <input
-                    type={showPassword ? 'text' : 'password'}
+                    type="password"
                     value={newPassword}
                     onChange={(e) => setNewPassword(e.target.value)}
-                    placeholder="••••••••"
-                    autoComplete="new-password"
-                    className="w-full pl-10 pr-10 py-2.5 border border-slate-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-teal-500 focus:border-transparent"
+                    placeholder="Новий пароль"
+                    className="w-full px-4 py-3 border border-slate-200 rounded-xl focus:outline-none focus:ring-2 focus:ring-teal-500"
                   />
-                  <button
-                    type="button"
-                    onClick={() => setShowPassword((v) => !v)}
-                    className="absolute right-3 top-1/2 -translate-y-1/2 text-slate-400 hover:text-slate-600"
-                  >
-                    {showPassword ? <EyeOff className="w-4 h-4" /> : <Eye className="w-4 h-4" />}
-                  </button>
-                </div>
-              </div>
-              <div>
-                <label className="block text-sm font-medium text-slate-700 mb-1.5">Підтвердіть пароль</label>
-                <div className="relative">
-                  <span className="absolute left-3.5 top-1/2 -translate-y-1/2 text-slate-400">
-                    <Lock className="w-4 h-4" />
-                  </span>
                   <input
-                    type={showPassword ? 'text' : 'password'}
+                    type="password"
                     value={confirmPassword}
                     onChange={(e) => setConfirmPassword(e.target.value)}
-                    placeholder="••••••••"
-                    autoComplete="new-password"
-                    className="w-full pl-10 pr-4 py-2.5 border border-slate-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-teal-500 focus:border-transparent"
+                    placeholder="Підтверддіть пароль"
+                    className="w-full px-4 py-3 border border-slate-200 rounded-xl focus:outline-none focus:ring-2 focus:ring-teal-500"
                   />
+                  <button
+                    onClick={handleChangePassword}
+                    disabled={loading}
+                    className="w-full py-3 bg-slate-700 text-white rounded-xl hover:bg-slate-800 disabled:opacity-50"
+                  >
+                    Змінити пароль
+                  </button>
                 </div>
-              </div>
+              )}
             </div>
 
-            <button
-              type="submit"
-              disabled={passwordSubmitting}
-              className="flex items-center justify-center gap-2 px-5 py-2.5 bg-gradient-to-r from-teal-500 to-cyan-500 text-white rounded-lg font-medium hover:from-teal-600 hover:to-cyan-600 transition-all shadow-md shadow-teal-500/25 disabled:opacity-60 disabled:cursor-not-allowed"
-            >
-              {passwordSubmitting ? <Loader2 className="w-4 h-4 animate-spin" /> : 'Змінити пароль'}
-            </button>
-          </form>
+            {message && (
+              <div className="p-3 bg-teal-50 border border-teal-200 rounded-lg text-teal-700 text-sm text-center">
+                {message}
+              </div>
+            )}
+          </div>
         </div>
       </main>
     </div>
