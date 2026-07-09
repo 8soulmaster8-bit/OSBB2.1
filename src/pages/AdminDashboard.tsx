@@ -16,13 +16,6 @@ export function AdminDashboard() {
     setStats({ residents: residents || 0, bills: bills || 0, requests: requests || 0 });
   }
 
-  const cards = [
-    { icon: <Users />, title: 'Жителі', count: stats.residents, color: 'from-blue-500 to-cyan-600' },
-    { icon: <FileText />, title: 'Рахунки', count: stats.bills, color: 'from-green-500 to-emerald-600' },
-    { icon: <Wrench />, title: 'Заявки', count: stats.requests, color: 'from-amber-500 to-orange-600' },
-    { icon: <Settings />, title: 'Налаштування', count: 0, color: 'from-purple-500 to-violet-600' },
-  ];
-
   return (
     <div className="min-h-screen bg-gradient-to-br from-slate-50 via-cyan-50 to-teal-50">
       <header className="bg-white/80 backdrop-blur-lg border-b border-slate-200 sticky top-0 z-50">
@@ -48,17 +41,22 @@ export function AdminDashboard() {
       <main className="max-w-7xl mx-auto px-4 py-8">
         <h2 className="text-2xl font-bold text-slate-800 mb-6">Вітаємо, {profile?.full_name}!</h2>
         <div className="grid sm:grid-cols-2 lg:grid-cols-4 gap-4">
-          {cards.map((card) => (
-            <div key={card.title} className="bg-white rounded-xl border border-slate-200 p-6 hover:shadow-lg transition-all cursor-pointer group">
-              <div className={`w-12 h-12 rounded-xl bg-gradient-to-br ${card.color} flex items-center justify-center text-white mb-4 group-hover:scale-110 transition-transform`}>
-                {card.icon}
-              </div>
-              <h3 className="text-lg font-semibold text-slate-800">{card.title}</h3>
-              <p className="text-2xl font-bold text-slate-600">{card.count}</p>
-            </div>
-          ))}
+          <Card icon={<Users />} title="Жителі" count={stats.residents} color="from-blue-500 to-cyan-600" />
+          <Card icon={<FileText />} title="Рахунки" count={stats.bills} color="from-green-500 to-emerald-600" />
+          <Card icon={<Wrench />} title="Заявки" count={stats.requests} color="from-amber-500 to-orange-600" />
+          <Card icon={<Settings />} title="Налаштування" count={0} color="from-purple-500 to-violet-600" />
         </div>
       </main>
+    </div>
+  );
+}
+
+function Card({ icon, title, count, color }: { icon: React.ReactNode; title: string; count: number; color: string }) {
+  return (
+    <div className="bg-white rounded-xl border border-slate-200 p-6 hover:shadow-lg transition-all cursor-pointer group">
+      <div className={`w-12 h-12 rounded-xl bg-gradient-to-br ${color} flex items-center justify-center text-white mb-4 group-hover:scale-110 transition-transform`}>{icon}</div>
+      <h3 className="text-lg font-semibold text-slate-800">{title}</h3>
+      <p className="text-2xl font-bold text-slate-600">{count}</p>
     </div>
   );
 }

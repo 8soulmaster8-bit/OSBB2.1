@@ -4,12 +4,9 @@ import { supabase } from '../lib/supabase';
 
 interface Profile {
   id: string;
-  user_id: string;
   full_name: string | null;
   role: 'admin' | 'user';
   tenant_id: string | null;
-  phone: string | null;
-  apartment_number: string | null;
   is_super_admin: boolean;
 }
 
