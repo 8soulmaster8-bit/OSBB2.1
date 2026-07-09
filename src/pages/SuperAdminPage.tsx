@@ -61,72 +61,64 @@ export function SuperAdminPage() {
 
         <div className="flex gap-2 mb-6">
           <button onClick={() => setTab('tenants')} className={`px-4 py-2 rounded-lg ${tab === 'tenants' ? 'bg-amber-500 text-white' : 'bg-slate-800 text-slate-400'}`}>
-            ОСББ ({tenants.length})
+            ОСББ
           </button>
           <button onClick={() => setTab('payments')} className={`px-4 py-2 rounded-lg ${tab === 'payments' ? 'bg-amber-500 text-white' : 'bg-slate-800 text-slate-400'}`}>
-            Платежі ({payments.length})
+            Платежі
           </button>
         </div>
 
         {loading ? (
           <div className="text-center py-12"><div className="w-10 h-10 border-4 border-amber-500 border-t-transparent rounded-full animate-spin mx-auto" /></div>
         ) : tab === 'tenants' ? (
-          <div className="bg-slate-800 rounded-xl border border-slate-700 overflow-hidden">
-            {tenants.length === 0 ? (
-              <div className="p-8 text-center text-slate-400">Немає ОСББ</div>
-            ) : (
-              <table className="w-full">
-                <thead className="bg-slate-700/50">
-                  <tr>
-                    <th className="px-4 py-3 text-left text-sm text-slate-300">Назва</th>
-                    <th className="px-4 py-3 text-left text-sm text-slate-300">Місто</th>
-                    <th className="px-4 py-3 text-left text-sm text-slate-300">Статус</th>
+          <div className="bg-slate-800 rounded-xl border border-slate-700">
+            <table className="w-full">
+              <thead className="bg-slate-700/50">
+                <tr>
+                  <th className="px-4 py-3 text-left text-sm text-slate-300">Назва</th>
+                  <th className="px-4 py-3 text-left text-sm text-slate-300">Місто</th>
+                  <th className="px-4 py-3 text-left text-sm text-slate-300">Статус</th>
+                </tr>
+              </thead>
+              <tbody>
+                {tenants.map((t) => (
+                  <tr key={t.id} className="border-t border-slate-700">
+                    <td className="px-4 py-3 text-white">{t.name}</td>
+                    <td className="px-4 py-3 text-slate-400">{t.city}</td>
+                    <td className="px-4 py-3">
+                      <span className={`px-2 py-1 rounded text-xs ${t.status === 'active' ? 'bg-green-500/20 text-green-400' : t.status === 'trial' ? 'bg-yellow-500/20 text-yellow-400' : 'bg-red-500/20 text-red-400'}`}>
+                        {t.status}
+                      </span>
+                    </td>
                   </tr>
-                </thead>
-                <tbody>
-                  {tenants.map((t) => (
-                    <tr key={t.id} className="border-t border-slate-700 hover:bg-slate-700/50">
-                      <td className="px-4 py-3 text-white">{t.name}</td>
-                      <td className="px-4 py-3 text-slate-400">{t.city}</td>
-                      <td className="px-4 py-3">
-                        <span className={`px-2 py-1 rounded text-xs ${t.status === 'active' ? 'bg-green-500/20 text-green-400' : t.status === 'trial' ? 'bg-yellow-500/20 text-yellow-400' : 'bg-red-500/20 text-red-400'}`}>
-                          {t.status}
-                        </span>
-                      </td>
-                    </tr>
-                  ))}
-                </tbody>
-              </table>
-            )}
+                ))}
+              </tbody>
+            </table>
           </div>
         ) : (
-          <div className="bg-slate-800 rounded-xl border border-slate-700 overflow-hidden">
-            {payments.length === 0 ? (
-              <div className="p-8 text-center text-slate-400">Немає платежів</div>
-            ) : (
-              <table className="w-full">
-                <thead className="bg-slate-700/50">
-                  <tr>
-                    <th className="px-4 py-3 text-left text-sm text-slate-300">Дата</th>
-                    <th className="px-4 py-3 text-left text-sm text-slate-300">Сума</th>
-                    <th className="px-4 py-3 text-left text-sm text-slate-300">Статус</th>
+          <div className="bg-slate-800 rounded-xl border border-slate-700">
+            <table className="w-full">
+              <thead className="bg-slate-700/50">
+                <tr>
+                  <th className="px-4 py-3 text-left text-sm text-slate-300">Дата</th>
+                  <th className="px-4 py-3 text-left text-sm text-slate-300">Сума</th>
+                  <th className="px-4 py-3 text-left text-sm text-slate-300">Статус</th>
+                </tr>
+              </thead>
+              <tbody>
+                {payments.map((p) => (
+                  <tr key={p.id} className="border-t border-slate-700">
+                    <td className="px-4 py-3 text-white">{new Date(p.created_at).toLocaleDateString()}</td>
+                    <td className="px-4 py-3 text-white">{p.amount?.toLocaleString()} грн</td>
+                    <td className="px-4 py-3">
+                      <span className={`px-2 py-1 rounded text-xs ${p.status === 'paid' ? 'bg-green-500/20 text-green-400' : 'bg-yellow-500/20 text-yellow-400'}`}>
+                        {p.status}
+                      </span>
+                    </td>
                   </tr>
-                </thead>
-                <tbody>
-                  {payments.map((p) => (
-                    <tr key={p.id} className="border-t border-slate-700 hover:bg-slate-700/50">
-                      <td className="px-4 py-3 text-white">{new Date(p.created_at).toLocaleDateString()}</td>
-                      <td className="px-4 py-3 text-white">{p.amount?.toLocaleString()} грн</td>
-                      <td className="px-4 py-3">
-                        <span className={`px-2 py-1 rounded text-xs ${p.status === 'paid' ? 'bg-green-500/20 text-green-400' : 'bg-yellow-500/20 text-yellow-400'}`}>
-                          {p.status}
-                        </span>
-                      </td>
-                    </tr>
-                  ))}
-                </tbody>
-              </table>
-            )}
+                ))}
+              </tbody>
+            </table>
           </div>
         )}
       </main>

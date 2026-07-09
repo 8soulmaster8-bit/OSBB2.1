@@ -5,10 +5,10 @@ export function UserDashboard() {
   const { profile, signOut } = useAuth();
 
   const cards = [
-    { icon: <Home />, title: 'Моє помешкання', desc: 'Інформація про квартиру', color: 'from-blue-500 to-cyan-600' },
-    { icon: <FileText />, title: 'Рахунки', desc: 'Перегляд та оплата', color: 'from-green-500 to-emerald-600' },
-    { icon: <Wrench />, title: 'Заявки', desc: 'Подати заявку', color: 'from-amber-500 to-orange-600' },
-    { icon: <Settings />, title: 'Лічильники', desc: 'Передати показники', color: 'from-purple-500 to-violet-600' },
+    { icon: <Home />, title: 'Моє помешкання', desc: 'Інформація про квартиру' },
+    { icon: <FileText />, title: 'Рахунки', desc: 'Перегляд та оплата' },
+    { icon: <Wrench />, title: 'Заявки', desc: 'Подати заявку' },
+    { icon: <Settings />, title: 'Лічильники', desc: 'Передати показники' },
   ];
 
   return (
@@ -38,7 +38,9 @@ export function UserDashboard() {
         <div className="grid sm:grid-cols-2 lg:grid-cols-4 gap-4">
           {cards.map((card) => (
             <div key={card.title} className="bg-white rounded-xl border border-slate-200 p-6 hover:shadow-lg transition-all cursor-pointer group">
-              <div className={`w-12 h-12 rounded-xl bg-gradient-to-br ${card.color} flex items-center justify-center text-white mb-4 group-hover:scale-110 transition-transform`}>{card.icon}</div>
+              <div className="w-12 h-12 rounded-xl bg-gradient-to-br from-teal-500 to-cyan-600 flex items-center justify-center text-white mb-4 group-hover:scale-110 transition-transform">
+                {card.icon}
+              </div>
               <h3 className="text-lg font-semibold text-slate-800">{card.title}</h3>
               <p className="text-sm text-slate-500">{card.desc}</p>
             </div>

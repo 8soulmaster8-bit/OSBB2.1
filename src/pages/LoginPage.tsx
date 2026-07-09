@@ -42,7 +42,6 @@ export function LoginPage() {
               value={email}
               onChange={(e) => setEmail(e.target.value)}
               className="w-full px-4 py-3 border border-slate-200 rounded-xl focus:outline-none focus:ring-2 focus:ring-teal-500"
-              placeholder="aqualux70@gmail.com"
               required
             />
           </div>
@@ -65,10 +64,6 @@ export function LoginPage() {
             {loading ? 'Завантаження...' : 'Увійти'}
           </button>
         </form>
-
-        <p className="text-center text-sm text-slate-500 mt-4">
-          Супер-адмін: aqualux70@gmail.com
-        </p>
       </div>
     </div>
   );

@@ -2,6 +2,4 @@
 @tailwind components;
 @tailwind utilities;
 
-body {
-  font-family: system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
-}
+html, body, #root { height: 100%; margin: 0; }
