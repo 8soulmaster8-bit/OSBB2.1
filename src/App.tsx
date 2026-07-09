@@ -5,6 +5,7 @@ import { AdminDashboardPage } from './pages/AdminDashboardPage';
 import { UserDashboardPage } from './pages/UserDashboardPage';
 import { ProfilePage } from './pages/ProfilePage';
 import { ProtectedRoute, dashboardPathForRole } from './components/ProtectedRoute';
+import { SubscriptionGuard } from './components/SubscriptionGuard';
 import { Building2 } from 'lucide-react';
 
 function RootRedirect() {
@@ -31,35 +32,37 @@ function RootRedirect() {
 
 function App() {
   return (
-    <Routes>
-      <Route path="/login" element={<AuthPage />} />
-      <Route
-        path="/admin/dashboard"
-        element={
-          <ProtectedRoute role="admin">
-            <AdminDashboardPage />
-          </ProtectedRoute>
-        }
-      />
-      <Route
-        path="/user/dashboard"
-        element={
-          <ProtectedRoute role="user">
-            <UserDashboardPage />
-          </ProtectedRoute>
-        }
-      />
-      <Route
-        path="/profile"
-        element={
-          <ProtectedRoute>
-            <ProfilePage />
-          </ProtectedRoute>
-        }
-      />
-      <Route path="/" element={<RootRedirect />} />
-      <Route path="*" element={<Navigate to="/" replace />} />
-    </Routes>
+    <SubscriptionGuard>
+      <Routes>
+        <Route path="/login" element={<AuthPage />} />
+        <Route
+          path="/admin/dashboard"
+          element={
+            <ProtectedRoute role="admin">
+              <AdminDashboardPage />
+            </ProtectedRoute>
+          }
+        />
+        <Route
+          path="/user/dashboard"
+          element={
+            <ProtectedRoute role="user">
+              <UserDashboardPage />
+            </ProtectedRoute>
+          }
+        />
+        <Route
+          path="/profile"
+          element={
+            <ProtectedRoute>
+              <ProfilePage />
+            </ProtectedRoute>
+          }
+        />
+        <Route path="/" element={<RootRedirect />} />
+        <Route path="*" element={<Navigate to="/" replace />} />
+      </Routes>
+    </SubscriptionGuard>
   );
 }
 
